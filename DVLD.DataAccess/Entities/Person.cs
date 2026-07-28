@@ -21,4 +21,5 @@ public class Person
     public virtual Gender Gender { get; set; } = null!;
     public virtual Country NationalityCountry { get; set; } = null!;
     public virtual User? User { get; set; }
+    public virtual ICollection<Application> Applications { get; set; } = new List<Application>();
 }

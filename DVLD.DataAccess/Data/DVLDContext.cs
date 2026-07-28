@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using DVLD.DataAccess.Entities;
-using DVLD.DataAccess.Configurations;
 using System.ComponentModel;
 
 namespace DVLD.DataAccess.Data;
@@ -20,6 +19,7 @@ public class DVLDContext : DbContext
     public virtual DbSet<ApplicationStatus> ApplicationStatuses { get; set; }
     public virtual DbSet<TestType> TestTypes { get; set; }
     public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<Application> Applications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

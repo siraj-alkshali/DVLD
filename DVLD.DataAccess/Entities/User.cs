@@ -11,4 +11,5 @@ public class User
     // Navigation properties
 
     public virtual Person Person { get; set; } = null!;
+    public virtual ICollection<Application> ApplicationsCreated { get; set; } = new List<Application>();
 }

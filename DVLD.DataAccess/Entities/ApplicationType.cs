@@ -8,4 +8,5 @@ public class ApplicationType
 
     // Navigation properties
 
+    public virtual ICollection<Application> Applications { get; set; } = new List<Application>();
 }
