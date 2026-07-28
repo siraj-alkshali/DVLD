@@ -15,6 +15,7 @@ public class DVLDContext : DbContext
     public virtual DbSet<Country> Countries { get; set; }
     public virtual DbSet<Gender> Genders { get; set; }
     public virtual DbSet<License> LicenseClasses { get; set; }
+    public virtual DbSet<ApplicationType> ApplicationTypes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
