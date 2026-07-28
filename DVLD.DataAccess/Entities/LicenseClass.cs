@@ -10,4 +10,6 @@ public class LicenseClass
     public decimal ClassFees { get; set; }
 
     // Navigation properties
+
+    public virtual ICollection<LocalDrivingLicenseApplication> LocalDrivingLicenseApplications { get; set; } = null!;
 }

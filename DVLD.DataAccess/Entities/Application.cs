@@ -14,6 +14,7 @@ public class Application
     // Navigation properties
 
     public virtual Person ApplicantPerson { get; set; } = null!;
+    public virtual LocalDrivingLicenseApplication? LocalDrivingLicenseApplication { get; set; }
     public virtual ApplicationType ApplicationType { get; set; } = null!;
     public virtual ApplicationStatus ApplicationStatus { get; set; } = null!;
     public virtual User CreatedByUser { get; set; } = null!;
