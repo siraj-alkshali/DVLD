@@ -15,4 +15,6 @@ public class User
     public virtual ICollection<Driver> DriversCreated { get; set; } = new List<Driver>();
     public virtual ICollection<License> LicensesCreated { get; set; } = new List<License>();
     public virtual ICollection<TestAppointment> TestAppointmentsCreated { get; set; } = new List<TestAppointment>();
+    public virtual ICollection<Test> TestsCreated { get; set; } = new List<Test>();
+
 }

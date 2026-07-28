@@ -23,6 +23,7 @@ public class DVLDContext : DbContext
     public virtual DbSet<Driver> Drivers { get; set; }
     public virtual DbSet<License> Licenses { get; set; }
     public virtual DbSet<TestAppointment> TestAppointments { get; set; }
+    public virtual DbSet<Test> Tests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

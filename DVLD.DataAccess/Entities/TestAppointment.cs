@@ -17,4 +17,5 @@ public class TestAppointment
     public virtual LocalDrivingLicenseApplication LocalDrivingLicenseApplication { get; set; } = null!;
     public virtual User CreatedByUser { get; set; } = null!;
     public virtual Application? RetakeApplication { get; set; }
+    public virtual Test? Test { get; set; }
 }
