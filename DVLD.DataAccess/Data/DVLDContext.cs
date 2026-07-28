@@ -18,6 +18,7 @@ public class DVLDContext : DbContext
     public virtual DbSet<ApplicationType> ApplicationTypes { get; set; }
     public virtual DbSet<LicenseIssueReason> LicenseIssueReasons { get; set; }
     public virtual DbSet<ApplicationStatus> ApplicationStatuses { get; set; }
+    public virtual DbSet<TestType> TestTypes { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
