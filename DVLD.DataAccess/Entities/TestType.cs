@@ -9,5 +9,5 @@ public class TestType
 
     // Navigation properties
 
-
+    public virtual ICollection<TestAppointment> TestAppointments { get; set; } = new List<TestAppointment>();
 }

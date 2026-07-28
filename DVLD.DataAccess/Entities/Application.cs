@@ -19,5 +19,5 @@ public class Application
     public virtual ApplicationStatus ApplicationStatus { get; set; } = null!;
     public virtual User CreatedByUser { get; set; } = null!;
     public virtual License? License { get; set; }
-
+    public virtual TestAppointment? TestRetake { get; set; }
 }

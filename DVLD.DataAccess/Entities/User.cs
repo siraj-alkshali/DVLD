@@ -14,5 +14,5 @@ public class User
     public virtual ICollection<Application> ApplicationsCreated { get; set; } = new List<Application>();
     public virtual ICollection<Driver> DriversCreated { get; set; } = new List<Driver>();
     public virtual ICollection<License> LicensesCreated { get; set; } = new List<License>();
-
+    public virtual ICollection<TestAppointment> TestAppointmentsCreated { get; set; } = new List<TestAppointment>();
 }
