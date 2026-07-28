@@ -7,5 +7,6 @@ public class LicenseIssueReason
 
     // Navigation property
 
+    public virtual ICollection<License> Licenses { get; set; } = new List<License>();
 
 }

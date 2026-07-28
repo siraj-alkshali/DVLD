@@ -18,5 +18,6 @@ public class Application
     public virtual ApplicationType ApplicationType { get; set; } = null!;
     public virtual ApplicationStatus ApplicationStatus { get; set; } = null!;
     public virtual User CreatedByUser { get; set; } = null!;
+    public virtual License? License { get; set; }
 
 }

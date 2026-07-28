@@ -12,4 +12,5 @@ public class LicenseClass
     // Navigation properties
 
     public virtual ICollection<LocalDrivingLicenseApplication> LocalDrivingLicenseApplications { get; set; } = null!;
+    public virtual ICollection<License> Licenses { get; set; } = new List<License>();
 }
