@@ -10,11 +10,6 @@ public class GenderConfiguration : IEntityTypeConfiguration<Gender>
     {
         builder.HasKey(gender => gender.GenderID);
 
-        // builder.HasMany(g => g.People)
-        // .WithOne(p => p.Gender)
-        // .HasForeignKey(p => p.GenderID)
-        // .OnDelete(DeleteBehavior.Restrict);
-
         builder.Property(gender => gender.GenderName).HasMaxLength(20).IsRequired();
 
     }
