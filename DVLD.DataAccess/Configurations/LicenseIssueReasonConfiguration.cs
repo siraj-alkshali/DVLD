@@ -9,9 +9,9 @@ public class LicenseIssueReasonConfiguration : IEntityTypeConfiguration<LicenseI
     public void Configure(EntityTypeBuilder<LicenseIssueReason> builder)
     {
 
-        builder.HasKey(lir => lir.IssueReasonID);
+        builder.HasKey(licenseIssueReason => licenseIssueReason.IssueReasonID);
 
-        builder.Property(lir => lir.IssueReasonName).HasMaxLength(100).IsRequired();
+        builder.Property(licenseIssueReason => licenseIssueReason.IssueReasonName).HasMaxLength(100).IsRequired();
 
     }
 }

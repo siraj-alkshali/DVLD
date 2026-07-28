@@ -8,13 +8,13 @@ public class CountryConfiguration : IEntityTypeConfiguration<Country>
 {
     public void Configure(EntityTypeBuilder<Country> builder)
     {
-        builder.HasKey(c => c.CountryID);
+        builder.HasKey(country => country.CountryID);
 
         // builder.HasMany(c => c.People)
         // .WithOne(p => p.NationalityCountry)
         // .HasForeignKey(p => p.NationalityCountryID)
         // .OnDelete(DeleteBehavior.Restrict);
 
-        builder.Property(c => c.CountryName).HasMaxLength(50).IsRequired();
+        builder.Property(country => country.CountryName).HasMaxLength(50).IsRequired();
     }
 }

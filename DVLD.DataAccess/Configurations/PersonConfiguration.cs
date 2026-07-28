@@ -8,39 +8,39 @@ public class PersonConfiguration : IEntityTypeConfiguration<Person>
 {
     public void Configure(EntityTypeBuilder<Person> builder)
     {
-        builder.HasKey(p => p.PersonID);
+        builder.HasKey(person => person.PersonID);
 
-        builder.HasOne(p => p.Gender)
-        .WithMany(g => g.People)
-        .HasForeignKey(p => p.GenderID)
+        builder.HasOne(person => person.Gender)
+        .WithMany(gender => gender.People)
+        .HasForeignKey(person => person.GenderID)
         .OnDelete(DeleteBehavior.Restrict)
         .HasConstraintName("FK_People_Genders");
 
-        builder.HasOne(p => p.NationalityCountry)
-        .WithMany(c => c.People)
-        .HasForeignKey(p => p.NationalityCountryID)
+        builder.HasOne(person => person.NationalityCountry)
+        .WithMany(country => country.People)
+        .HasForeignKey(person => person.NationalityCountryID)
         .OnDelete(DeleteBehavior.Restrict)
         .HasConstraintName("FK_People_Countries");
 
-        builder.HasIndex(p => p.NationalNo, "UQ_People_NationalNo")
+        builder.HasIndex(person => person.NationalNo, "UQ_People_NationalNo")
         .IsUnique();
 
-        builder.Property(p => p.NationalNo).HasMaxLength(20).IsRequired();
+        builder.Property(person => person.NationalNo).HasMaxLength(20).IsRequired();
 
-        builder.Property(p => p.FirstName).HasMaxLength(20).IsRequired();
+        builder.Property(person => person.FirstName).HasMaxLength(20).IsRequired();
 
-        builder.Property(p => p.SecondName).HasMaxLength(20).IsRequired();
+        builder.Property(person => person.SecondName).HasMaxLength(20).IsRequired();
 
-        builder.Property(p => p.ThirdName).HasMaxLength(20);
+        builder.Property(person => person.ThirdName).HasMaxLength(20);
 
-        builder.Property(p => p.DateOfBirth).HasColumnType("DATE").IsRequired();
+        builder.Property(person => person.DateOfBirth).HasColumnType("DATE").IsRequired();
 
-        builder.Property(p => p.Address).HasMaxLength(500).IsRequired();
+        builder.Property(person => person.Address).HasMaxLength(500).IsRequired();
 
-        builder.Property(p => p.Phone).HasMaxLength(20).IsRequired();
+        builder.Property(person => person.Phone).HasMaxLength(20).IsRequired();
 
-        builder.Property(p => p.Email).HasMaxLength(50);
+        builder.Property(person => person.Email).HasMaxLength(50);
 
-        builder.Property(p => p.ImagePath).HasMaxLength(250);
+        builder.Property(person => person.ImagePath).HasMaxLength(250);
     }
 }

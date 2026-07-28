@@ -8,10 +8,10 @@ public class ApplicationTypeConfiguration : IEntityTypeConfiguration<Application
 {
     public void Configure(EntityTypeBuilder<ApplicationType> builder)
     {
-        builder.HasKey(at => at.ApplicationTypeID);
+        builder.HasKey(appType => appType.ApplicationTypeID);
 
-        builder.Property(at => at.ApplicationTypeTitle).HasMaxLength(50).IsRequired();
+        builder.Property(appType => appType.ApplicationTypeTitle).HasMaxLength(50).IsRequired();
 
-        builder.Property(at => at.ApplicationFees).HasPrecision(10, 2);
+        builder.Property(appType => appType.ApplicationFees).HasPrecision(10, 2);
     }
 }
