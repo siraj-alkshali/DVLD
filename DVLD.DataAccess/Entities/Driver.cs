@@ -12,4 +12,6 @@ public class Driver
     public virtual Person Person { get; set; } = null!;
     public virtual User CreatedByUser { get; set; } = null!;
     public virtual ICollection<License> Licenses { get; set; } = new List<License>();
+    public virtual ICollection<InternationalLicense> InternationalLicenses { get; set; } = new List<InternationalLicense>();
+
 }

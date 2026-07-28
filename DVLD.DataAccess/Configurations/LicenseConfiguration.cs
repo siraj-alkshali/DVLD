@@ -36,7 +36,7 @@ public class LicenseConfiguration : IEntityTypeConfiguration<License>
         .HasConstraintName("FK_Licenses_LicenseIssueReasons");
 
         builder.HasOne(license => license.CreatedByUser)
-        .WithMany(user => user.LicensesCreated)
+        .WithMany(user => user.LicensesIssued)
         .HasForeignKey(license => license.CreatedByUserID)
         .OnDelete(DeleteBehavior.Restrict)
         .HasConstraintName("FK_Licenses_Users");

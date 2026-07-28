@@ -20,4 +20,6 @@ public class Application
     public virtual User CreatedByUser { get; set; } = null!;
     public virtual License? License { get; set; }
     public virtual TestAppointment? TestRetake { get; set; }
+    public virtual InternationalLicense? InternationalLicenseApplication { get; set; }
+    public virtual DetainedLicense? ReleasedDetention { get; set; }
 }

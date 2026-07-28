@@ -21,4 +21,7 @@ public class License
     public virtual LicenseClass LicenseClass { get; set; } = null!;
     public virtual LicenseIssueReason LicenseIssueReason { get; set; } = null!;
     public virtual User CreatedByUser { get; set; } = null!;
+    public virtual ICollection<InternationalLicense> InternationalLicensesHistory { get; set; } = new List<InternationalLicense>();
+    public virtual ICollection<DetainedLicense> Detentions { get; set; } = new List<DetainedLicense>();
+
 }

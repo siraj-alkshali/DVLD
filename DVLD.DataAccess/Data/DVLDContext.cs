@@ -24,6 +24,8 @@ public class DVLDContext : DbContext
     public virtual DbSet<License> Licenses { get; set; }
     public virtual DbSet<TestAppointment> TestAppointments { get; set; }
     public virtual DbSet<Test> Tests { get; set; }
+    public virtual DbSet<InternationalLicense> InternationalLicenses { get; set; }
+    public virtual DbSet<DetainedLicense> DetainedLicenses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
