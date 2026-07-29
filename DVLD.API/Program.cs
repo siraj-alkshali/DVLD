@@ -1,5 +1,10 @@
 using DVLD.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using DVLD.API.Services;
+using DVLD.API.Services.Interfaces;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +21,16 @@ builder.Services.AddDbContext<DVLDContext>(options =>
     );
 });
 
+builder.Services.AddScoped<IPersonService, PersonService>();
+
 builder.Services.AddControllers();
+
+builder.Services.AddFluentValidationAutoValidation();
+
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
