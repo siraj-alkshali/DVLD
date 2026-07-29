@@ -1,4 +1,5 @@
 using DVLD.API.DTOs.People;
+using DVLD.API.Common.Results;
 using DVLD.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,24 +16,21 @@ public class PeopleController : ControllerBase
         _personService = personService;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreatePerson(CreatePersonDto dto)
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<PersonDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<PersonDto>>> GetAllPeople()
     {
-        int personID = await _personService.CreatePersonAsync(dto);
+        IEnumerable<PersonDto> people = await _personService.GetAllPeopleAsync();
 
-        // return CreatedAtAction(
-        //     nameof(GetPersonById),
-        //     new { id = personID },
-        //     personID
-        // );
-
-        return Ok(personID);
+        return Ok(people);
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetPersonById(int id)
+    [HttpGet("{id}", Name = "GetPersonByID")]
+    [ProducesResponseType(typeof(PersonDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PersonDto>> GetPersonById(int id)
     {
-        PersonDto? person = await _personService.GetPersonByIDAsync(id);
+        PersonDto? person = await _personService.GetPersonByIdAsync(id);
 
         if (person == null)
         {
@@ -42,18 +40,31 @@ public class PeopleController : ControllerBase
         return Ok(person);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAllPeople()
+    [HttpPost]
+    [ProducesResponseType(typeof(PersonDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<PersonDto>> CreatePerson(CreatePersonDto createPersonDto)
     {
-        IEnumerable<PersonDto> people = await _personService.GetAllPeopleAsync();
+        ServiceResult<PersonDto> result = await _personService.CreatePersonAsync(createPersonDto);
 
-        return Ok(people);
+        if (!result.IsSuccess)
+            return Conflict(result.Errors);
+
+        return CreatedAtRoute(
+            "GetPersonByID",
+            new { id = result.Data!.PersonID },
+            result.Data
+        );
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdatePerson(int id, UpdatePersonDto dto)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdatePerson(int id, UpdatePersonDto updatePersonDto)
     {
-        var updated = await _personService.UpdatePersonAsync(id, dto);
+        bool updated = await _personService.UpdatePersonAsync(id, updatePersonDto);
 
         if (!updated)
         {
@@ -64,9 +75,11 @@ public class PeopleController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeletePerson(int id)
     {
-        var deleted = await _personService.DeletePersonAsync(id);
+        bool deleted = await _personService.DeletePersonAsync(id);
 
         if (!deleted)
         {
@@ -76,10 +89,12 @@ public class PeopleController : ControllerBase
         return NoContent();
     }
 
-    [HttpGet("search/nationalNo/{nationalNo}")]
-    public async Task<IActionResult> SearchByNationalNo(string nationalNo)
+    [HttpGet("nationalNo/{nationalNo}", Name = "GetPersonByNationalNo")]
+    [ProducesResponseType(typeof(PersonDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPersonByNationalNo(string nationalNo)
     {
-        var person = await _personService.GetPersonByNationalNoAsync(nationalNo);
+        PersonDto? person = await _personService.GetPersonByNationalNoAsync(nationalNo);
 
         if (person == null)
         {

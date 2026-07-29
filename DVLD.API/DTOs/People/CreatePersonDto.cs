@@ -1,6 +1,6 @@
 namespace DVLD.API.DTOs.People;
 
-public class CreatePersonDto
+public class CreatePersonDto : IPersonDto
 {
     public string NationalNo { get; set; } = null!;
     public string FirstName { get; set; } = null!;
@@ -13,5 +13,4 @@ public class CreatePersonDto
     public string Phone { get; set; } = null!;
     public string? Email { get; set; }
     public int NationalityCountryID { get; set; }
-    public string? ImagePath { get; set; }
 }
