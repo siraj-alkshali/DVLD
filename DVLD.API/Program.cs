@@ -27,6 +27,7 @@ builder.Services.AddScoped<IGenderService, GenderService>();
 builder.Services.AddScoped<ILicenseClassService, LicenseClassService>();
 builder.Services.AddScoped<ITestTypeService, TestTypeService>();
 builder.Services.AddScoped<IApplicationTypeService, ApplicationTypeService>();
+builder.Services.AddScoped<IApplicationStatusService, ApplicationStatusService>();
 
 builder.Services.AddControllers();
 
