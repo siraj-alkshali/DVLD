@@ -155,19 +155,15 @@ public class PersonService : IPersonService
 
     public async Task<PersonDto?> GetPersonByNationalNoAsync(string nationalNo)
     {
-        return await _context.People
-            .Where(p => p.NationalNo == nationalNo)
-            .Select(p => new PersonDto(
-                p.PersonID,
-                p.NationalNo,
-                $"{p.FirstName} {p.SecondName} {p.ThirdName} {p.LastName}",
-                p.DateOfBirth,
-                p.Gender.GenderName,
-                p.Address,
-                p.Phone,
-                p.Email,
-                p.NationalityCountry.CountryName
-            ))
-            .SingleOrDefaultAsync();
+        Person? person = await _context.People.Where(p => p.NationalNo == nationalNo)
+                        .Include(p => p.Gender)
+                        .Include(p => p.NationalityCountry)
+                        .AsNoTracking()
+                        .SingleOrDefaultAsync();
+
+        if (person == null)
+            return null;
+
+        return person.ToDto();
     }
 }

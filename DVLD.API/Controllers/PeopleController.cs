@@ -25,7 +25,7 @@ public class PeopleController : ControllerBase
         return Ok(people);
     }
 
-    [HttpGet("{id}", Name = "GetPersonByID")]
+    [HttpGet("{id}", Name = "GetPersonById")]
     [ProducesResponseType(typeof(PersonDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PersonDto>> GetPersonById(int id)
@@ -52,7 +52,7 @@ public class PeopleController : ControllerBase
             return Conflict(result.Errors);
 
         return CreatedAtRoute(
-            "GetPersonByID",
+            "GetPersonById",
             new { id = result.Data!.PersonID },
             result.Data
         );
