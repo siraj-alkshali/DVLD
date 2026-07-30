@@ -6,5 +6,5 @@ namespace DVLD.API.Services.Interfaces;
 public interface IImageService
 {
     Task<ServiceResult<string>> UploadImageAsync(IFormFile file);
-    Task<FileResultData?> GetImageAsync(string fileName);
+    FileResultData? GetImage(string fileName);
 }

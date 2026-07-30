@@ -28,9 +28,9 @@ public class ImagesController : ControllerBase
     }
 
     [HttpGet("{fileName}")]
-    public async Task<IActionResult> GetImage(string fileName)
+    public IActionResult GetImage(string fileName)
     {
-        FileResultData? file = await _imageService.GetImageAsync(fileName);
+        FileResultData? file = _imageService.GetImage(fileName);
 
         if (file == null)
             return NotFound();

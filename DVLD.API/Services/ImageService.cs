@@ -69,7 +69,7 @@ public class ImageService : IImageService
         return ServiceResult<string>.Success(uniqueFileName);
     }
 
-    public async Task<FileResultData?> GetImageAsync(string fileName)
+    public FileResultData? GetImage(string fileName)
     {
         string imagePath = Path.Combine(_environment.WebRootPath, "images", fileName);
 
