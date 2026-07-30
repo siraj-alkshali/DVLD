@@ -26,9 +26,22 @@ public class PersonService : IPersonService
         return await _context.People.AnyAsync(p => p.NationalNo == nationalNo);
     }
 
-    private async Task<bool> CheckDuplicateNationalNoAsync(string nationalNo, int id)
+    private async Task<bool> NationalNoExistsForAnotherPersonAsync(string nationalNo, int id)
     {
         return await _context.People.AnyAsync(p => p.NationalNo == nationalNo && p.PersonID != id);
+    }
+
+    private async Task<List<string>> GetReferenceErrorsAsync(int genderId, int countryId)
+    {
+        List<string> errors = new List<string>();
+
+        if (!await _genderService.GenderExistsAsync(genderId))
+            errors.Add("The selected gender does not exist");
+
+        if (!await _countryService.CountryExistsAsync(countryId))
+            errors.Add("The selected nationality country does not exist");
+
+        return errors;
     }
 
     private async Task<List<string>> GetCreatePersonValidationErrorsAsync(CreatePersonDto createPersonDto)
@@ -38,11 +51,7 @@ public class PersonService : IPersonService
         if (await NationalNoExistsAsync(createPersonDto.NationalNo))
             errors.Add("A person with this national number already exists");
 
-        if (!await _genderService.GenderExistsAsync(createPersonDto.GenderID))
-            errors.Add("The selected gender does not exist");
-
-        if (!await _countryService.CountryExistsAsync(createPersonDto.NationalityCountryID))
-            errors.Add("The selected nationality country does not exist");
+        errors.AddRange(await GetReferenceErrorsAsync(createPersonDto.GenderID, createPersonDto.NationalityCountryID));
 
         return errors;
     }
@@ -51,14 +60,10 @@ public class PersonService : IPersonService
     {
         List<string> errors = new List<string>();
 
-        if (await CheckDuplicateNationalNoAsync(updatePersonDto.NationalNo, id))
+        if (await NationalNoExistsForAnotherPersonAsync(updatePersonDto.NationalNo, id))
             errors.Add("A person with this national number already exists");
 
-        if (!await _genderService.GenderExistsAsync(updatePersonDto.GenderID))
-            errors.Add("The selected gender does not exist");
-
-        if (!await _countryService.CountryExistsAsync(updatePersonDto.NationalityCountryID))
-            errors.Add("The selected nationality country does not exist");
+        errors.AddRange(await GetReferenceErrorsAsync(updatePersonDto.GenderID, updatePersonDto.NationalityCountryID));
 
         return errors;
     }
