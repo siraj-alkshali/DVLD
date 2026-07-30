@@ -22,6 +22,7 @@ builder.Services.AddDbContext<DVLDContext>(options =>
 });
 
 builder.Services.AddScoped<IPersonService, PersonService>();
+builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<ICountryService, CountryService>();
 builder.Services.AddScoped<IGenderService, GenderService>();
 builder.Services.AddScoped<ILicenseClassService, LicenseClassService>();
@@ -41,6 +42,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseStaticFiles();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
