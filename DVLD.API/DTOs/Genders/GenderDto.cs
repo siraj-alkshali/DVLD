@@ -10,5 +10,5 @@ public class GenderDto
     }
 
     public int GenderID { get; set; }
-    public string GenderName { get; set; } = null!;
+    public string GenderName { get; set; }
 }
