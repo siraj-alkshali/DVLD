@@ -24,6 +24,7 @@ builder.Services.AddDbContext<DVLDContext>(options =>
 builder.Services.AddScoped<IPersonService, PersonService>();
 builder.Services.AddScoped<ICountryService, CountryService>();
 builder.Services.AddScoped<IGenderService, GenderService>();
+builder.Services.AddScoped<ILicenseClassService, LicenseClassService>();
 
 builder.Services.AddControllers();
 
