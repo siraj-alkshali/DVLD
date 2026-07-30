@@ -1,7 +1,6 @@
 using DVLD.API.DTOs.Countries;
 using DVLD.API.Services.Interfaces;
 using DVLD.DataAccess.Data;
-using DVLD.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace DVLD.API.Services;
@@ -19,12 +18,15 @@ public class CountryService : ICountryService
     public async Task<IEnumerable<CountryDto>> GetAllCountriesAsync()
     {
         return await _context.Countries.Select(c => new CountryDto(c.CountryID, c.CountryName))
+        .AsNoTracking()
         .ToListAsync();
     }
 
     public async Task<CountryDto?> GetCountryByIdAsync(int id)
     {
-        return await _context.Countries.Where(c => c.CountryID == id)
+        return await _context.Countries
+        .AsNoTracking()
+        .Where(c => c.CountryID == id)
         .Select(c => new CountryDto(c.CountryID, c.CountryName))
         .SingleOrDefaultAsync();
     }

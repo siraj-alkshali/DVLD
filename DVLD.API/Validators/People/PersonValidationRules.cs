@@ -16,21 +16,21 @@ public static class PersonValidationRules
         validator.RuleFor(p => p.FirstName)
         .Cascade(CascadeMode.Stop)
         .NotEmpty()
-        .MaximumLength(50);
+        .MaximumLength(20);
 
         validator.RuleFor(p => p.SecondName)
         .Cascade(CascadeMode.Stop)
         .NotEmpty()
-        .MaximumLength(50);
+        .MaximumLength(20);
 
         validator.RuleFor(p => p.ThirdName)
-        .MaximumLength(50)
+        .MaximumLength(20)
         .When(p => p.ThirdName != null);
 
         validator.RuleFor(p => p.LastName)
         .Cascade(CascadeMode.Stop)
         .NotEmpty()
-        .MaximumLength(50);
+        .MaximumLength(20);
 
         validator.RuleFor(p => p.DateOfBirth)
         .Cascade(CascadeMode.Stop)
@@ -54,6 +54,8 @@ public static class PersonValidationRules
         .MaximumLength(20);
 
         validator.RuleFor(p => p.Email)
+        .Cascade(CascadeMode.Stop)
+        .MaximumLength(50)
         .EmailAddress()
         .When(p => !string.IsNullOrWhiteSpace(p.Email));
 

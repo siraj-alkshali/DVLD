@@ -25,7 +25,7 @@ public class PersonConfiguration : IEntityTypeConfiguration<Person>
         builder.HasIndex(person => person.NationalNo, "UQ_People_NationalNo")
         .IsUnique();
 
-        builder.Property(person => person.NationalNo).HasMaxLength(20).IsRequired();
+        builder.Property(person => person.NationalNo).HasMaxLength(10).IsRequired();
 
         builder.Property(person => person.FirstName).HasMaxLength(20).IsRequired();
 

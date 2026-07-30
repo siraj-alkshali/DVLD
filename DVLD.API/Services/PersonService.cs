@@ -11,10 +11,56 @@ namespace DVLD.API.Services;
 public class PersonService : IPersonService
 {
     private readonly DVLDContext _context;
+    private readonly ICountryService _countryService;
+    private readonly IGenderService _genderService;
 
-    public PersonService(DVLDContext context)
+    public PersonService(DVLDContext context, ICountryService countryService, IGenderService genderService)
     {
         _context = context;
+        _countryService = countryService;
+        _genderService = genderService;
+    }
+
+    private async Task<bool> NationalNoExistsAsync(string nationalNo)
+    {
+        return await _context.People.AnyAsync(p => p.NationalNo == nationalNo);
+    }
+
+    private async Task<bool> CheckDuplicateNationalNoAsync(string nationalNo, int id)
+    {
+        return await _context.People.AnyAsync(p => p.NationalNo == nationalNo && p.PersonID != id);
+    }
+
+    private async Task<List<string>> GetCreatePersonValidationErrorsAsync(CreatePersonDto createPersonDto)
+    {
+        List<string> errors = new List<string>();
+
+        if (await NationalNoExistsAsync(createPersonDto.NationalNo))
+            errors.Add("A person with this national number already exists");
+
+        if (!await _genderService.GenderExistsAsync(createPersonDto.GenderID))
+            errors.Add("The selected gender does not exist");
+
+        if (!await _countryService.CountryExistsAsync(createPersonDto.NationalityCountryID))
+            errors.Add("The selected nationality country does not exist");
+
+        return errors;
+    }
+
+    private async Task<List<string>> GetUpdatePersonValidationErrorsAsync(UpdatePersonDto updatePersonDto, int id)
+    {
+        List<string> errors = new List<string>();
+
+        if (await CheckDuplicateNationalNoAsync(updatePersonDto.NationalNo, id))
+            errors.Add("A person with this national number already exists");
+
+        if (!await _genderService.GenderExistsAsync(updatePersonDto.GenderID))
+            errors.Add("The selected gender does not exist");
+
+        if (!await _countryService.CountryExistsAsync(updatePersonDto.NationalityCountryID))
+            errors.Add("The selected nationality country does not exist");
+
+        return errors;
     }
 
     public async Task<IEnumerable<PersonDto>> GetAllPeopleAsync()
@@ -37,9 +83,9 @@ public class PersonService : IPersonService
     public async Task<PersonDto?> GetPersonByIdAsync(int id)
     {
         Person? person = await _context.People.Where(p => p.PersonID == id)
+                        .AsNoTracking()
                         .Include(p => p.Gender)
                         .Include(p => p.NationalityCountry)
-                        .AsNoTracking()
                         .SingleOrDefaultAsync();
 
         if (person == null)
@@ -50,65 +96,27 @@ public class PersonService : IPersonService
 
     public async Task<ServiceResult<PersonDto>> CreatePersonAsync(CreatePersonDto createPersonDto)
     {
-
-        List<string> errors = new List<string>();
-
-        bool existingNationalNo = await _context.People.AnyAsync(p => p.NationalNo == createPersonDto.NationalNo);
-
-        if (existingNationalNo)
-        {
-            errors.Add("A person with this national number already exists");
-        }
-
-        bool genderExists = await _context.Genders
-        .AnyAsync(g => g.GenderID == createPersonDto.GenderID);
-
-        if (!genderExists)
-        {
-            errors.Add("The selected gender does not exist");
-        }
-
-        bool countryExists = await _context.Countries.AnyAsync(c => c.CountryID == createPersonDto.NationalityCountryID);
-
-        if (!countryExists)
-        {
-            errors.Add("The selected nationality country does not exist");
-        }
+        List<string> errors = await GetCreatePersonValidationErrorsAsync(createPersonDto);
 
         if (errors.Count > 0)
-        {
             return ServiceResult<PersonDto>.Failure(errors, FailureType.Conflict);
-        }
 
-        Person person = new Person
-        {
-            NationalNo = createPersonDto.NationalNo,
-            FirstName = createPersonDto.FirstName,
-            SecondName = createPersonDto.SecondName,
-            ThirdName = createPersonDto.ThirdName,
-            LastName = createPersonDto.LastName,
-            DateOfBirth = createPersonDto.DateOfBirth,
-            GenderID = createPersonDto.GenderID,
-            Address = createPersonDto.Address,
-            Phone = createPersonDto.Phone,
-            Email = createPersonDto.Email,
-            NationalityCountryID = createPersonDto.NationalityCountryID,
-        };
+        Person person = createPersonDto.ToEntity();
 
         await _context.People.AddAsync(person);
 
         await _context.SaveChangesAsync();
 
-        Person data = await _context.People.Where(p => p.PersonID == person.PersonID)
+        Person savedPerson = await _context.People.Where(p => p.PersonID == person.PersonID)
+                        .AsNoTracking()
                         .Include(p => p.Gender)
                         .Include(p => p.NationalityCountry)
-                        .AsNoTracking()
                         .SingleAsync();
 
-        return ServiceResult<PersonDto>.Success(data.ToDto());
+        return ServiceResult<PersonDto>.Success(savedPerson.ToDto());
     }
 
-    public async Task<bool> UpdatePersonAsync(int id, UpdatePersonDto updatePersonDto)
+    public async Task<ServiceResult<PersonDto>> UpdatePersonAsync(int id, UpdatePersonDto updatePersonDto)
     {
 
         Person? person = await _context.People
@@ -116,24 +124,25 @@ public class PersonService : IPersonService
 
         if (person == null)
         {
-            return false;
+            return ServiceResult<PersonDto>.Failure(["The requested person was not found"], FailureType.NotFound);
         }
 
-        person.NationalNo = updatePersonDto.NationalNo;
-        person.FirstName = updatePersonDto.FirstName;
-        person.SecondName = updatePersonDto.SecondName;
-        person.ThirdName = updatePersonDto.ThirdName;
-        person.LastName = updatePersonDto.LastName;
-        person.DateOfBirth = updatePersonDto.DateOfBirth;
-        person.GenderID = updatePersonDto.GenderID;
-        person.Address = updatePersonDto.Address;
-        person.Phone = updatePersonDto.Phone;
-        person.Email = updatePersonDto.Email;
-        person.NationalityCountryID = updatePersonDto.NationalityCountryID;
+        List<string> errors = await GetUpdatePersonValidationErrorsAsync(updatePersonDto, id);
+
+        if (errors.Count > 0)
+            return ServiceResult<PersonDto>.Failure(errors, FailureType.Conflict);
+
+        person.UpdateFromDto(updatePersonDto);
 
         await _context.SaveChangesAsync();
 
-        return true;
+        Person savedPerson = await _context.People.AsNoTracking()
+        .Where(p => p.PersonID == person.PersonID)
+        .Include(p => p.Gender)
+        .Include(p => p.NationalityCountry)
+        .SingleAsync();
+
+        return ServiceResult<PersonDto>.Success(savedPerson.ToDto());
     }
 
     public async Task<bool> DeletePersonAsync(int id)
@@ -156,9 +165,9 @@ public class PersonService : IPersonService
     public async Task<PersonDto?> GetPersonByNationalNoAsync(string nationalNo)
     {
         Person? person = await _context.People.Where(p => p.NationalNo == nationalNo)
+                        .AsNoTracking()
                         .Include(p => p.Gender)
                         .Include(p => p.NationalityCountry)
-                        .AsNoTracking()
                         .SingleOrDefaultAsync();
 
         if (person == null)

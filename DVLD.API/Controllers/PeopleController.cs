@@ -59,19 +59,29 @@ public class PeopleController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdatePerson(int id, UpdatePersonDto updatePersonDto)
     {
-        bool updated = await _personService.UpdatePersonAsync(id, updatePersonDto);
+        ServiceResult<PersonDto> result = await _personService.UpdatePersonAsync(id, updatePersonDto);
 
-        if (!updated)
+        if (!result.IsSuccess)
         {
-            return NotFound();
+            switch (result.ResultType)
+            {
+                case FailureType.Conflict:
+                    return Conflict(result.Errors);
+
+                case FailureType.NotFound:
+                    return NotFound();
+
+                default:
+                    break;
+            }
         }
 
-        return NoContent();
+        return Ok(result.Data);
     }
 
     [HttpDelete("{id}")]
