@@ -11,4 +11,5 @@ public interface IPersonService
     Task<ServiceResult<PersonDto>> UpdatePersonAsync(int id, UpdatePersonDto dto);
     Task<bool> DeletePersonAsync(int id);
     Task<PersonDto?> GetPersonByNationalNoAsync(string nationalNo);
+    Task<ServiceResult<PersonDto>> UpdatePersonImageAsync(int personId, IFormFile image);
 }

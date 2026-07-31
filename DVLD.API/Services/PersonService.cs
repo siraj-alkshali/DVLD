@@ -13,12 +13,14 @@ public class PersonService : IPersonService
     private readonly DVLDContext _context;
     private readonly ICountryService _countryService;
     private readonly IGenderService _genderService;
+    private readonly IImageService _imageService;
 
-    public PersonService(DVLDContext context, ICountryService countryService, IGenderService genderService)
+    public PersonService(DVLDContext context, ICountryService countryService, IGenderService genderService, IImageService imageService)
     {
         _context = context;
         _countryService = countryService;
         _genderService = genderService;
+        _imageService = imageService;
     }
 
     private async Task<bool> NationalNoExistsAsync(string nationalNo)
@@ -81,7 +83,8 @@ public class PersonService : IPersonService
         p.Address,
         p.Phone,
         p.Email,
-        p.NationalityCountry.CountryName
+        p.NationalityCountry.CountryName,
+        p.ImagePath
     )).ToListAsync();
     }
 
@@ -96,7 +99,7 @@ public class PersonService : IPersonService
         if (person == null)
             return null;
 
-        return person.ToDto();
+        return person.ToDto(_imageService.GetImageUrl(person.ImagePath));
     }
 
     public async Task<ServiceResult<PersonDto>> CreatePersonAsync(CreatePersonDto createPersonDto)
@@ -118,7 +121,7 @@ public class PersonService : IPersonService
                         .Include(p => p.NationalityCountry)
                         .SingleAsync();
 
-        return ServiceResult<PersonDto>.Success(savedPerson.ToDto());
+        return ServiceResult<PersonDto>.Success(savedPerson.ToDto(_imageService.GetImageUrl(savedPerson.ImagePath)));
     }
 
     public async Task<ServiceResult<PersonDto>> UpdatePersonAsync(int id, UpdatePersonDto updatePersonDto)
@@ -147,7 +150,37 @@ public class PersonService : IPersonService
         .Include(p => p.NationalityCountry)
         .SingleAsync();
 
-        return ServiceResult<PersonDto>.Success(savedPerson.ToDto());
+        return ServiceResult<PersonDto>.Success(savedPerson.ToDto(_imageService.GetImageUrl(savedPerson.ImagePath)));
+    }
+
+    public async Task<ServiceResult<PersonDto>> UpdatePersonImageAsync(int personId, IFormFile image)
+    {
+        Person? person = await _context.People.FindAsync(personId);
+
+        if (person == null)
+            return ServiceResult<PersonDto>.Failure(["The requested person was not found"], FailureType.NotFound);
+
+        ServiceResult<string> imageUploadResult = await _imageService.UploadImageAsync(image);
+
+        if (!imageUploadResult.IsSuccess)
+            return ServiceResult<PersonDto>.Failure(imageUploadResult.Errors, FailureType.Validation);
+
+        string? oldImage = person.ImagePath;
+
+        person.ImagePath = imageUploadResult.Data;
+
+        await _context.SaveChangesAsync();
+
+        if (!string.IsNullOrWhiteSpace(oldImage))
+            await _imageService.DeleteImage(oldImage);
+
+        Person savedPerson = await _context.People.AsNoTracking()
+        .Where(p => p.PersonID == person.PersonID)
+        .Include(p => p.Gender)
+        .Include(p => p.NationalityCountry)
+        .SingleAsync();
+
+        return ServiceResult<PersonDto>.Success(savedPerson.ToDto(_imageService.GetImageUrl(savedPerson.ImagePath)));
     }
 
     public async Task<bool> DeletePersonAsync(int id)
@@ -160,9 +193,14 @@ public class PersonService : IPersonService
             return false;
         }
 
+        string? imagePath = person.ImagePath;
+
         _context.People.Remove(person);
 
         await _context.SaveChangesAsync();
+
+        if (!string.IsNullOrWhiteSpace(imagePath))
+            await _imageService.DeleteImage(imagePath);
 
         return true;
     }
@@ -178,6 +216,6 @@ public class PersonService : IPersonService
         if (person == null)
             return null;
 
-        return person.ToDto();
+        return person.ToDto(_imageService.GetImageUrl(person.ImagePath));
     }
 }

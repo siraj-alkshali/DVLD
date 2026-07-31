@@ -7,4 +7,6 @@ public interface IImageService
 {
     Task<ServiceResult<string>> UploadImageAsync(IFormFile file);
     FileResultData? GetImage(string fileName);
+    Task DeleteImage(string fileName);
+    string? GetImageUrl(string? imagePath);
 }

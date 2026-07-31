@@ -11,7 +11,7 @@ public class PersonDto
     public string Phone { get; set; }
     public string? Email { get; set; }
     public string Nationality { get; set; }
-    public string? ImagePath { get; set; }
+    public string? ImageUrl { get; set; }
 
     public PersonDto(
     int personID,
@@ -22,7 +22,8 @@ public class PersonDto
     string address,
     string phone,
     string? email,
-    string nationality)
+    string nationality,
+    string? imageUrl)
     {
         PersonID = personID;
         NationalNo = nationalNo;
@@ -33,5 +34,6 @@ public class PersonDto
         Phone = phone;
         Email = email;
         Nationality = nationality;
+        ImageUrl = imageUrl;
     }
 }

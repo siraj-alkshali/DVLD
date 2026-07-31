@@ -5,7 +5,7 @@ namespace DVLD.API.Mappings.People;
 
 public static class PersonMappingExtensions
 {
-    public static PersonDto ToDto(this Person person)
+    public static PersonDto ToDto(this Person person, string? imageUrl)
     {
         return new PersonDto(
             person.PersonID,
@@ -16,7 +16,8 @@ public static class PersonMappingExtensions
             person.Address,
             person.Phone,
             person.Email,
-            person.NationalityCountry.CountryName
+            person.NationalityCountry.CountryName,
+            imageUrl
         );
     }
 

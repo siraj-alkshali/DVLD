@@ -7,10 +7,12 @@ namespace DVLD.API.Services;
 public class ImageService : IImageService
 {
     private readonly IWebHostEnvironment _environment;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ImageService(IWebHostEnvironment environment)
+    public ImageService(IWebHostEnvironment environment, IHttpContextAccessor httpContextAccessor)
     {
         _environment = environment;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     private async Task<bool> IsValidImageContentAsync(IFormFile file)
@@ -97,5 +99,25 @@ public class ImageService : IImageService
             ".png" => "image/png",
             _ => "application/octet-stream"
         };
+    }
+
+    public Task DeleteImage(string fileName)
+    {
+        string imagePath = Path.Combine(_environment.WebRootPath, "images", fileName);
+
+        if (File.Exists(imagePath))
+            File.Delete(imagePath);
+
+        return Task.CompletedTask;
+    }
+
+    public string? GetImageUrl(string? imagePath)
+    {
+        if (string.IsNullOrWhiteSpace(imagePath))
+            return null;
+
+        HttpRequest request = _httpContextAccessor.HttpContext!.Request;
+
+        return $"{request.Scheme}://{request.Host}/images/{imagePath}";
     }
 }

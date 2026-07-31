@@ -77,7 +77,33 @@ public class PeopleController : ControllerBase
                     return NotFound();
 
                 default:
-                    break;
+                    return StatusCode(500);
+            }
+        }
+
+        return Ok(result.Data);
+    }
+
+    [HttpPost("{id}/image")]
+    [ProducesResponseType(typeof(PersonDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PersonDto>> UpdatePersonImage(int id, IFormFile image)
+    {
+        ServiceResult<PersonDto> result = await _personService.UpdatePersonImageAsync(id, image);
+
+        if (!result.IsSuccess)
+        {
+            switch (result.ResultType)
+            {
+                case FailureType.Validation:
+                    return BadRequest(result.Errors);
+
+                case FailureType.NotFound:
+                    return NotFound();
+
+                default:
+                    return StatusCode(500);
             }
         }
 
@@ -102,7 +128,7 @@ public class PeopleController : ControllerBase
     [HttpGet("nationalNo/{nationalNo}", Name = "GetPersonByNationalNo")]
     [ProducesResponseType(typeof(PersonDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetPersonByNationalNo(string nationalNo)
+    public async Task<ActionResult<PersonDto>> GetPersonByNationalNo(string nationalNo)
     {
         PersonDto? person = await _personService.GetPersonByNationalNoAsync(nationalNo);
 

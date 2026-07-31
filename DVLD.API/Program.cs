@@ -33,6 +33,8 @@ builder.Services.AddScoped<ILicenseIssueReasonService, LicenseIssueReasonService
 
 builder.Services.AddControllers();
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
