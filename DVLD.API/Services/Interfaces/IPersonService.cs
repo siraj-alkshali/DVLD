@@ -1,5 +1,6 @@
 using DVLD.API.DTOs.People;
 using DVLD.API.Common.Results;
+using DVLD.API.DTOs.Users;
 
 namespace DVLD.API.Services.Interfaces;
 
@@ -12,4 +13,5 @@ public interface IPersonService
     Task<bool> DeletePersonAsync(int id);
     Task<PersonDto?> GetPersonByNationalNoAsync(string nationalNo);
     Task<ServiceResult<PersonDto>> UpdatePersonImageAsync(int personId, IFormFile image);
+    Task<bool> PersonExistsAsync(int id);
 }

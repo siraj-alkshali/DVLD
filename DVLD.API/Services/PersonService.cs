@@ -127,8 +127,9 @@ public class PersonService : IPersonService
     public async Task<ServiceResult<PersonDto>> UpdatePersonAsync(int id, UpdatePersonDto updatePersonDto)
     {
 
-        Person? person = await _context.People
-            .FindAsync(id);
+        Person? person = await _context.People.Include(p => p.Gender)
+        .Include(p => p.NationalityCountry)
+        .SingleOrDefaultAsync(p => p.PersonID == id);
 
         if (person == null)
         {
@@ -144,18 +145,19 @@ public class PersonService : IPersonService
 
         await _context.SaveChangesAsync();
 
-        Person savedPerson = await _context.People.AsNoTracking()
-        .Where(p => p.PersonID == person.PersonID)
+        Person updatedPerson = await _context.People.AsNoTracking()
         .Include(p => p.Gender)
         .Include(p => p.NationalityCountry)
-        .SingleAsync();
+        .SingleAsync(p => p.PersonID == person.PersonID);
 
-        return ServiceResult<PersonDto>.Success(savedPerson.ToDto(_imageService.GetImageUrl(savedPerson.ImagePath)));
+        return ServiceResult<PersonDto>.Success(updatedPerson.ToDto(_imageService.GetImageUrl(updatedPerson.ImagePath)));
     }
 
     public async Task<ServiceResult<PersonDto>> UpdatePersonImageAsync(int personId, IFormFile image)
     {
-        Person? person = await _context.People.FindAsync(personId);
+        Person? person = await _context.People.Include(p => p.Gender)
+        .Include(p => p.NationalityCountry)
+        .SingleAsync(p => p.PersonID == personId);
 
         if (person == null)
             return ServiceResult<PersonDto>.Failure(["The requested person was not found"], FailureType.NotFound);
@@ -174,13 +176,7 @@ public class PersonService : IPersonService
         if (!string.IsNullOrWhiteSpace(oldImage))
             await _imageService.DeleteImage(oldImage);
 
-        Person savedPerson = await _context.People.AsNoTracking()
-        .Where(p => p.PersonID == person.PersonID)
-        .Include(p => p.Gender)
-        .Include(p => p.NationalityCountry)
-        .SingleAsync();
-
-        return ServiceResult<PersonDto>.Success(savedPerson.ToDto(_imageService.GetImageUrl(savedPerson.ImagePath)));
+        return ServiceResult<PersonDto>.Success(person.ToDto(_imageService.GetImageUrl(person.ImagePath)));
     }
 
     public async Task<bool> DeletePersonAsync(int id)
@@ -217,5 +213,10 @@ public class PersonService : IPersonService
             return null;
 
         return person.ToDto(_imageService.GetImageUrl(person.ImagePath));
+    }
+
+    public async Task<bool> PersonExistsAsync(int id)
+    {
+        return await _context.People.AnyAsync(p => p.PersonID == id);
     }
 }
