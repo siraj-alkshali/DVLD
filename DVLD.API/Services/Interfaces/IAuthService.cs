@@ -1,10 +1,11 @@
 using DVLD.API.Common.Results;
 using DVLD.API.DTOs.Auth;
-using DVLD.DataAccess.Entities;
+using DVLD.API.DTOs.Users;
 
 namespace DVLD.API.Services.Interfaces;
 
 public interface IAuthService
 {
     Task<ServiceResult<LoginResponseDto>> LoginAsync(LoginRequestDto dto);
+    Task<UserDto?> GetUserByUserIdAsync(int userId);
 }

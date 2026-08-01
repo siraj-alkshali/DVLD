@@ -6,6 +6,7 @@ using DVLD.DataAccess.Data;
 using DVLD.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 using DVLD.API.Mappings.Users;
+using DVLD.API.DTOs.Users;
 
 namespace DVLD.API.Services;
 
@@ -56,4 +57,17 @@ public class AuthService : IAuthService
         });
     }
 
+    public async Task<UserDto?> GetUserByUserIdAsync(int userId)
+    {
+        User? user = await _context.Users
+            .AsNoTracking()
+            .Include(u => u.Person)
+            .Include(u => u.Role)
+            .SingleOrDefaultAsync(u => u.UserID == userId);
+
+        if (user == null)
+            return null;
+
+        return user.ToDto();
+    }
 }
