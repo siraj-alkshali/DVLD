@@ -1,4 +1,4 @@
-namespace DVLD.API.DTOs.Users;
+namespace DVLD.API.DTOs.Auth;
 
 public class LoginRequestDto
 {

@@ -10,7 +10,8 @@ public static class UserMappingExtensions
         return new UserDto(
             user.UserID,
             $"{user.Person.FirstName} {user.Person.LastName}",
-            user.UserName
+            user.UserName,
+            user.Role.RoleTitle
         );
     }
 }
