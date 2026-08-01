@@ -10,6 +10,6 @@ public class ApplicationStatusConfiguration : IEntityTypeConfiguration<Applicati
     {
         builder.HasKey(appStatus => appStatus.ApplicationStatusID);
 
-        builder.Property(appStatus => appStatus.StatusName);
+        builder.Property(appStatus => appStatus.StatusName).HasMaxLength(50).IsRequired();
     }
 }

@@ -18,6 +18,7 @@ public class DVLDContext : DbContext
     public virtual DbSet<ApplicationStatus> ApplicationStatuses { get; set; }
     public virtual DbSet<TestType> TestTypes { get; set; }
     public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<Role> Roles { get; set; }
     public virtual DbSet<Application> Applications { get; set; }
     public virtual DbSet<LocalDrivingLicenseApplication> LocalDrivingLicenseApplications { get; set; }
     public virtual DbSet<Driver> Drivers { get; set; }

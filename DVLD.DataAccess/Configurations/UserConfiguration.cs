@@ -16,7 +16,13 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         .OnDelete(DeleteBehavior.Restrict)
         .HasConstraintName("FK_Users_People");
 
-        builder.HasIndex(u => u.PersonID, "UQ_Users_PersonID").IsUnique();
+        builder.HasOne(user => user.Role)
+        .WithMany(role => role.Users)
+        .HasForeignKey(user => user.RoleID)
+        .OnDelete(DeleteBehavior.Restrict)
+        .HasConstraintName("FK_Users_Roles");
+
+        builder.HasIndex(user => user.PersonID, "UQ_Users_PersonID").IsUnique();
 
         builder.HasIndex(user => user.UserName, "UQ_Users_UserName").IsUnique();
 
