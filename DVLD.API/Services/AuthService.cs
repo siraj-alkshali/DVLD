@@ -15,12 +15,14 @@ public class AuthService : IAuthService
     private readonly DVLDContext _context;
     private readonly IPasswordHasherService _passwordHasherService;
     private readonly IJwtService _jwtService;
+    private readonly IRefreshTokenService _refreshTokenService;
 
-    public AuthService(DVLDContext context, IPasswordHasherService passwordHasherService, IJwtService jwtService)
+    public AuthService(DVLDContext context, IPasswordHasherService passwordHasherService, IJwtService jwtService, IRefreshTokenService refreshTokenService)
     {
         _context = context;
         _passwordHasherService = passwordHasherService;
         _jwtService = jwtService;
+        _refreshTokenService = refreshTokenService;
     }
 
     private async Task<User?> GetUserByUserNameAsync(string userName)
@@ -29,11 +31,6 @@ public class AuthService : IAuthService
         .Include(u => u.Person)
         .Include(u => u.Role)
         .SingleOrDefaultAsync(u => u.UserName == userName);
-    }
-
-    private string NormalizeUserName(string userName)
-    {
-        return userName.Trim().ToLower();
     }
 
     public async Task<ServiceResult<LoginResponseDto>> LoginAsync(LoginRequestDto dto)
@@ -50,11 +47,51 @@ public class AuthService : IAuthService
 
         string token = _jwtService.GenerateToken(user);
 
+        RefreshTokenResultDto refreshTokenResult = await _refreshTokenService.CreateRefreshTokenAsync(user.UserID);
+
         return ServiceResult<LoginResponseDto>.Success(new LoginResponseDto
         {
             User = user.ToDto(),
-            Token = token
+            AccessToken = token,
+            RefreshToken = refreshTokenResult.Token
         });
+    }
+
+    public async Task<ServiceResult<LoginResponseDto>> RefreshTokenAsync(RefreshTokenRequestDto dto)
+    {
+        RefreshToken? refreshToken = await _refreshTokenService.GetRefreshTokenAsync(dto.RefreshToken);
+
+        if (refreshToken == null)
+            return ServiceResult<LoginResponseDto>.Failure(["Invalid refresh token"], FailureType.Unauthorized);
+
+        if (!_refreshTokenService.IsRefreshTokenValidAsync(refreshToken))
+            return ServiceResult<LoginResponseDto>.Failure(["Refresh token expired or revoked"], FailureType.Unauthorized);
+
+        User user = refreshToken.User;
+
+        string newAccessToken = _jwtService.GenerateToken(user);
+        RefreshTokenResultDto newRefreshTokenResult = await _refreshTokenService.CreateRefreshTokenAsync(user.UserID);
+
+        await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken, newRefreshTokenResult.RefreshTokenEntity.TokenHash);
+
+        return ServiceResult<LoginResponseDto>.Success(new LoginResponseDto
+        {
+            User = user.ToDto(),
+            AccessToken = newAccessToken,
+            RefreshToken = newRefreshTokenResult.Token
+        });
+    }
+
+    public async Task<ServiceResult<bool>> LogoutAsync(LogoutRequestDto dto)
+    {
+        RefreshToken? refreshToken = await _refreshTokenService.GetRefreshTokenAsync(dto.RefreshToken);
+
+        if (refreshToken == null)
+            return ServiceResult<bool>.Failure(["Invalid refresh token"], FailureType.Unauthorized);
+
+        await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken);
+
+        return ServiceResult<bool>.Success(true);
     }
 
     public async Task<UserDto?> GetUserByUserIdAsync(int userId)
@@ -70,4 +107,6 @@ public class AuthService : IAuthService
 
         return user.ToDto();
     }
+
+
 }

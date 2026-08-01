@@ -27,6 +27,7 @@ public class DVLDContext : DbContext
     public virtual DbSet<Test> Tests { get; set; }
     public virtual DbSet<InternationalLicense> InternationalLicenses { get; set; }
     public virtual DbSet<DetainedLicense> DetainedLicenses { get; set; }
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

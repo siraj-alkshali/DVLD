@@ -49,7 +49,23 @@ public class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpPost("refresh")]
+    [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<LoginResponseDto>> Refresh(RefreshTokenRequestDto dto)
+    {
+        ServiceResult<LoginResponseDto> result = await _authService.RefreshTokenAsync(dto);
+
+        if (!result.IsSuccess)
+            return Unauthorized(result.Errors);
+
+        return Ok(result.Data);
+    }
+
+    [Authorize]
     [HttpGet("me")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserDto>> GetCurrentUser()
     {
         string? userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -62,5 +78,19 @@ public class AuthController : ControllerBase
         UserDto? user = await _authService.GetUserByUserIdAsync(userId);
 
         return Ok(user);
+    }
+
+    [Authorize]
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Logout(LogoutRequestDto dto)
+    {
+        ServiceResult<bool> result = await _authService.LogoutAsync(dto);
+
+        if (!result.IsSuccess)
+            return Unauthorized(result.Errors);
+
+        return Ok(result.Data);
     }
 }

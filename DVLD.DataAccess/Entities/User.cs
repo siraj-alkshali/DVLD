@@ -21,5 +21,5 @@ public class User
     public virtual ICollection<InternationalLicense> InternationalLicensesIssued { get; set; } = new List<InternationalLicense>();
     public virtual ICollection<DetainedLicense> DetainedLicensesCreated { get; set; } = new List<DetainedLicense>();
     public virtual ICollection<DetainedLicense> DetainedLicensesReleased { get; set; } = new List<DetainedLicense>();
-
+    public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 }
