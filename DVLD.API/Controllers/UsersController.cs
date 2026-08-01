@@ -39,7 +39,6 @@ public class UsersController : ControllerBase
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UserDto>> CreateUser(CreateUserDto createUserDto)
     {
@@ -49,11 +48,8 @@ public class UsersController : ControllerBase
         {
             switch (result.ResultType)
             {
-                case FailureType.NotFound:
-                    return NotFound();
-
                 case FailureType.Conflict:
-                    return Conflict();
+                    return Conflict(result.Errors);
 
                 default:
                     return StatusCode(500);
@@ -70,6 +66,7 @@ public class UsersController : ControllerBase
     [HttpPatch("{id}/username")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserDto>> ChangeUserName(int id, ChangeUserNameDto changeUserNameDto)
     {
@@ -80,10 +77,10 @@ public class UsersController : ControllerBase
             switch (result.ResultType)
             {
                 case FailureType.NotFound:
-                    return NotFound();
+                    return NotFound(result.Errors);
 
-                case FailureType.Validation:
-                    return BadRequest(result.Errors);
+                case FailureType.Conflict:
+                    return Conflict(result.Errors);
 
                 default:
                     return StatusCode(500);
@@ -107,10 +104,10 @@ public class UsersController : ControllerBase
             switch (result.ResultType)
             {
                 case FailureType.NotFound:
-                    return NotFound();
+                    return NotFound(result.Errors);
 
                 case FailureType.Conflict:
-                    return Conflict();
+                    return Conflict(result.Errors);
 
                 case FailureType.Validation:
                     return BadRequest(result.Errors);
@@ -123,4 +120,29 @@ public class UsersController : ControllerBase
         return Ok(result.Data);
     }
 
+    [HttpPatch("{id}/is-active")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<UserDto>> ChangeUserStatus(int id, ChangeUserStatusDto dto)
+    {
+        ServiceResult<UserDto> result = await _userService.ChangeUserStatusAsync(id, dto);
+
+        if (!result.IsSuccess)
+        {
+            switch (result.ResultType)
+            {
+                case FailureType.NotFound:
+                    return NotFound(result.Errors);
+
+                case FailureType.Conflict:
+                    return Conflict(result.Errors);
+
+                default:
+                    return StatusCode(500);
+            }
+        }
+
+        return Ok(result.Data);
+    }
 }

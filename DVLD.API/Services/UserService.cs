@@ -64,7 +64,7 @@ public class UserService : IUserService
         List<string> errors = await GetCreateUserValidationErrorsAsync(createUserDto.PersonID, normalizedUserName);
 
         if (errors.Count > 0)
-            return ServiceResult<UserDto>.Failure(errors, FailureType.Validation);
+            return ServiceResult<UserDto>.Failure(errors, FailureType.Conflict);
 
         string passwordHash = _passwordHasherService.HashPassword(createUserDto.Password);
 
@@ -117,7 +117,17 @@ public class UserService : IUserService
         if (user == null)
             return ServiceResult<UserDto>.Failure(["The requested user was not found"], FailureType.NotFound);
 
-        string passwordHash = _passwordHasherService.HashPassword(dto.Password);
+        if (!_passwordHasherService.VerifyPassword(dto.CurrentPassword, user.PasswordHash))
+            return ServiceResult<UserDto>.Failure(["The current password is incorrect"], FailureType.Validation);
+
+        if (_passwordHasherService.VerifyPassword(dto.NewPassword, user.PasswordHash))
+        {
+            return ServiceResult<UserDto>.Failure(
+                ["The new password must be different from the current password"],
+                FailureType.Validation);
+        }
+
+        string passwordHash = _passwordHasherService.HashPassword(dto.NewPassword);
 
         user.PasswordHash = passwordHash;
 
@@ -148,20 +158,26 @@ public class UserService : IUserService
         return user.ToDto();
     }
 
-    public async Task<UserDto?> GetUserByUserNameAsync(string userName)
-    {
-        User? user = await _context.Users.AsNoTracking()
-        .Include(u => u.Person)
-        .SingleOrDefaultAsync(u => u.UserName == NormalizeUserName(userName));
-
-        if (user == null)
-            return null;
-
-        return user.ToDto();
-    }
-
     public async Task<bool> UserExistsAsync(int id)
     {
         return await _context.Users.AnyAsync(u => u.UserID == id);
+    }
+
+    public async Task<ServiceResult<UserDto>> ChangeUserStatusAsync(int id, ChangeUserStatusDto dto)
+    {
+        User? user = await _context.Users.Include(u => u.Person)
+        .SingleOrDefaultAsync(u => u.UserID == id);
+
+        if (user == null)
+            return ServiceResult<UserDto>.Failure(["The requested user was not found"], FailureType.NotFound);
+
+        if (user.IsActive == dto.IsActive)
+            return ServiceResult<UserDto>.Failure([$"This user account is already {(user.IsActive ? "activated" : "deactivated")}"], FailureType.Conflict);
+
+        user.IsActive = dto.IsActive;
+
+        await _context.SaveChangesAsync();
+
+        return ServiceResult<UserDto>.Success(user.ToDto());
     }
 }
