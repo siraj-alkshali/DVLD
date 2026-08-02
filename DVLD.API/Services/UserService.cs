@@ -6,6 +6,9 @@ using DVLD.DataAccess.Data;
 using DVLD.DataAccess.Entities;
 using DVLD.API.Common;
 using Microsoft.EntityFrameworkCore;
+using DVLD.API.Extensions;
+using DVLD.API.Common.QueryParameters;
+using DVLD.API.DTOs.Common;
 
 namespace DVLD.API.Services;
 
@@ -150,15 +153,33 @@ public class UserService : IUserService
         return ServiceResult<UserDto>.Success(user.ToDto());
     }
 
-    public async Task<IEnumerable<UserDto>> GetAllUsersAsync()
+    public async Task<PagedResultDto<UserDto>> GetAllUsersAsync(UsersQueryParameters parameters)
     {
-        return await _context.Users.AsNoTracking()
+        IQueryable<User> query = _context.Users.AsNoTracking()
+        .Include(u => u.Person)
+        .Include(u => u.Role)
+        .ApplySearch(parameters.SearchTerm)
+        .ApplyFilter(parameters)
+        .ApplySort(parameters);
+
+        int totalItems = await query.CountAsync();
+
+        List<UserDto> items = await query
+        .ApplyPagination(parameters)
         .Select(u => new UserDto(
             u.UserID,
             $"{u.Person.FirstName} {u.Person.LastName}",
             u.UserName,
-            u.Role.RoleTitle
-        )).ToListAsync();
+            u.Role.RoleTitle))
+            .ToListAsync();
+
+        return new PagedResultDto<UserDto>
+        {
+            Items = items,
+            TotalItems = totalItems,
+            PageNumber = parameters.PageNumber,
+            PageSize = parameters.PageSize
+        };
     }
 
     public async Task<UserDto?> GetUserByIdAsync(int id)

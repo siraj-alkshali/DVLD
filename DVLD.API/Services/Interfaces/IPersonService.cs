@@ -1,12 +1,13 @@
 using DVLD.API.DTOs.People;
 using DVLD.API.Common.Results;
-using DVLD.API.DTOs.Users;
+using DVLD.API.DTOs.Common;
+using DVLD.API.Common.QueryParameters;
 
 namespace DVLD.API.Services.Interfaces;
 
 public interface IPersonService
 {
-    Task<IEnumerable<PersonDto>> GetAllPeopleAsync();
+    Task<PagedResultDto<PersonDto>> GetAllPeopleAsync(PeopleQueryParameters parameters);
     Task<PersonDto?> GetPersonByIdAsync(int id);
     Task<ServiceResult<PersonDto>> CreatePersonAsync(CreatePersonDto dto);
     Task<ServiceResult<PersonDto>> UpdatePersonAsync(int id, UpdatePersonDto dto);

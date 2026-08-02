@@ -2,6 +2,8 @@ using DVLD.API.DTOs.Users;
 using DVLD.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using DVLD.API.Common.Results;
+using DVLD.API.DTOs.Common;
+using DVLD.API.Common.QueryParameters;
 
 namespace DVLD.API.Controllers;
 
@@ -17,10 +19,10 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<UserDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
+    [ProducesResponseType(typeof(PagedResultDto<UserDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResultDto<UserDto>>> GetAllUsers([FromQuery] UsersQueryParameters parameters)
     {
-        return Ok(await _userService.GetAllUsersAsync());
+        return Ok(await _userService.GetAllUsersAsync(parameters));
     }
 
     [HttpGet("{id}", Name = "GetUserById")]

@@ -73,9 +73,13 @@ public class AuthController : ControllerBase
         if (userIdClaim == null)
             return Unauthorized();
 
-        int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        if (!int.TryParse(userIdClaim, out int userId))
+            return Unauthorized();
 
         UserDto? user = await _authService.GetUserByUserIdAsync(userId);
+
+        if (user == null)
+            return Unauthorized();
 
         return Ok(user);
     }

@@ -1,4 +1,6 @@
+using DVLD.API.Common.QueryParameters;
 using DVLD.API.Common.Results;
+using DVLD.API.DTOs.Common;
 using DVLD.API.DTOs.Users;
 using DVLD.DataAccess.Entities;
 
@@ -6,7 +8,7 @@ namespace DVLD.API.Services.Interfaces;
 
 public interface IUserService
 {
-    Task<IEnumerable<UserDto>> GetAllUsersAsync();
+    Task<PagedResultDto<UserDto>> GetAllUsersAsync(UsersQueryParameters parameters);
     Task<UserDto?> GetUserByIdAsync(int id);
     Task<ServiceResult<UserDto>> CreateUserAsync(CreateUserDto createUserDto);
     Task<bool> UserExistsAsync(int id);

@@ -5,6 +5,9 @@ using DVLD.DataAccess.Entities;
 using DVLD.API.Common.Results;
 using Microsoft.EntityFrameworkCore;
 using DVLD.API.Mappings.People;
+using DVLD.API.DTOs.Common;
+using DVLD.API.Common.QueryParameters;
+using DVLD.API.Extensions;
 
 namespace DVLD.API.Services;
 
@@ -70,22 +73,40 @@ public class PersonService : IPersonService
         return errors;
     }
 
-    public async Task<IEnumerable<PersonDto>> GetAllPeopleAsync()
+    public async Task<PagedResultDto<PersonDto>> GetAllPeopleAsync(PeopleQueryParameters parameters)
     {
-        return await _context.People
+        IQueryable<Person> query = _context.People
         .AsNoTracking()
+        .ApplySearch(parameters.SearchTerm)
+        .ApplyFilters(parameters)
+        .ApplySort(parameters);
+
+        int totalItems = await query.CountAsync();
+
+        List<PersonDto> people = await query
+        .ApplyPagination(parameters)
         .Select(p => new PersonDto(
-        p.PersonID,
-        p.NationalNo,
-        $"{p.FirstName} {p.SecondName} {p.ThirdName} {p.LastName}",
-        p.DateOfBirth,
-        p.Gender.GenderName,
-        p.Address,
-        p.Phone,
-        p.Email,
-        p.NationalityCountry.CountryName,
-        p.ImagePath
-    )).ToListAsync();
+            p.PersonID,
+            p.NationalNo,
+            $"{p.FirstName} {p.SecondName} {p.ThirdName} {p.LastName}",
+            p.DateOfBirth,
+            p.Gender.GenderName,
+            p.Address,
+            p.Phone,
+            p.Email,
+            p.NationalityCountry.CountryName,
+            _imageService.GetImageUrl(p.ImagePath)
+        ))
+        .ToListAsync();
+
+        return new PagedResultDto<PersonDto>
+        {
+            Items = people,
+            TotalItems = totalItems,
+            PageNumber = parameters.PageNumber,
+            PageSize = parameters.PageSize
+        };
+
     }
 
     public async Task<PersonDto?> GetPersonByIdAsync(int id)

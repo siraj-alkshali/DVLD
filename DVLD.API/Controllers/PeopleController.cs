@@ -2,6 +2,8 @@ using DVLD.API.DTOs.People;
 using DVLD.API.Common.Results;
 using DVLD.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using DVLD.API.DTOs.Common;
+using DVLD.API.Common.QueryParameters;
 
 namespace DVLD.API.Controllers;
 
@@ -17,12 +19,12 @@ public class PeopleController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<PersonDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<PersonDto>>> GetAllPeople()
+    [ProducesResponseType(typeof(PagedResultDto<PersonDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResultDto<PersonDto>>> GetAllPeople([FromQuery] PeopleQueryParameters parameters)
     {
-        IEnumerable<PersonDto> people = await _personService.GetAllPeopleAsync();
+        PagedResultDto<PersonDto> pagedResults = await _personService.GetAllPeopleAsync(parameters);
 
-        return Ok(people);
+        return Ok(pagedResults);
     }
 
     [HttpGet("{id}", Name = "GetPersonById")]
