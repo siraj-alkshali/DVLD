@@ -1,7 +1,9 @@
+using DVLD.API.Common.Constants;
 using DVLD.API.Common.Results;
 using DVLD.API.Services.Interfaces;
 using DVLD.DataAccess.Data;
 using DVLD.DataAccess.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DVLD.API.Services;
 
@@ -28,5 +30,17 @@ public class LocalDrivingLicenseApplicationService : ILocalDrivingLicenseApplica
         };
 
         return ServiceResult<LocalDrivingLicenseApplication>.Success(licenseApp);
+    }
+
+    public async Task<LocalDrivingLicenseApplication?> GetLocalDrivingLicenseApplicationById(int id)
+    {
+        return await _context.LocalDrivingLicenseApplications
+        .Include(localApp => localApp.BaseApplication)
+        .SingleOrDefaultAsync(localApp => localApp.LocalDrivingLicenseApplicationID == id);
+    }
+
+    public bool IsActiveAsync(LocalDrivingLicenseApplication localDrivingApp)
+    {
+        return localDrivingApp.BaseApplication.ApplicationStatusID == (int)enApplicationStatus.New;
     }
 }

@@ -1,7 +1,9 @@
+using DVLD.API.Common.Constants;
 using DVLD.API.DTOs.TestTypes;
 using DVLD.API.Services.Interfaces;
 using DVLD.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using DVLD.DataAccess.Entities;
 
 namespace DVLD.API.Services;
 
@@ -21,11 +23,16 @@ public class TestTypeService : ITestTypeService
         )).ToListAsync();
     }
 
-    public async Task<TestTypeDto?> GetTestTypeByIdAsync(int id)
+    public async Task<TestTypeDto?> GetTestTypeDtoByIdAsync(int id)
     {
         return await _context.TestTypes.Where(tt => tt.TestTypeID == id)
         .Select(tt => new TestTypeDto(
         tt.TestTypeID, tt.TestTypeTitle, tt.TestTypeDescription, tt.TestTypeFees
         )).SingleOrDefaultAsync();
+    }
+
+    public async Task<TestType?> GetTestTypeByIdAsync(int id)
+    {
+        return await _context.TestTypes.FindAsync(id);
     }
 }

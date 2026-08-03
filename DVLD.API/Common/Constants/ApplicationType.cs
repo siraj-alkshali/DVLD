@@ -1,6 +1,6 @@
 namespace DVLD.API.Common.Constants;
 
-public enum ApplicationTypeType
+public enum enApplicationType
 {
     NewLocalDrivingLicense = 1,
     RenewDrivingLicense = 2,

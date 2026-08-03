@@ -84,7 +84,7 @@ public class ApplicationService : IApplicationService
             ApplicantPersonID = applicantPersonId,
             ApplicationDate = today,
             ApplicationTypeID = appType.ApplicationTypeID,
-            ApplicationStatusID = (int)ApplicationStatusType.New,
+            ApplicationStatusID = (int)enApplicationStatus.New,
             LastStatusDate = today,
             PaidFees = appType.ApplicationFees,
             CreatedByUserID = createdByUserID.Value
@@ -95,7 +95,7 @@ public class ApplicationService : IApplicationService
 
     public async Task<ServiceResult<ApplicationDto>> CreateNewDrivingLicenseApplicationAsync(CreateLocalDrivingLicenseApplicationDto dto)
     {
-        ServiceResult<Application> baseAppEntityCreationResult = await BuildApplicationEntityAsync(dto.ApplicantPersonID, (int)ApplicationTypeType.NewLocalDrivingLicense);
+        ServiceResult<Application> baseAppEntityCreationResult = await BuildApplicationEntityAsync(dto.ApplicantPersonID, (int)enApplicationType.NewLocalDrivingLicense);
 
         if (!baseAppEntityCreationResult.IsSuccess)
             return ServiceResult<ApplicationDto>.Failure(baseAppEntityCreationResult.Errors, baseAppEntityCreationResult.ResultType!.Value);

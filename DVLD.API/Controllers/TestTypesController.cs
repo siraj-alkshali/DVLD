@@ -28,7 +28,7 @@ public class TestTypesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TestTypeDto>> GetTestTypeById(int id)
     {
-        TestTypeDto? testType = await _testTypeService.GetTestTypeByIdAsync(id);
+        TestTypeDto? testType = await _testTypeService.GetTestTypeDtoByIdAsync(id);
 
         if (testType == null)
             return NotFound();
