@@ -1,5 +1,6 @@
 using DVLD.API.Common.Results;
 using DVLD.API.DTOs.TestAppointments;
+using DVLD.DataAccess.Entities;
 
 namespace DVLD.API.Services.Interfaces;
 

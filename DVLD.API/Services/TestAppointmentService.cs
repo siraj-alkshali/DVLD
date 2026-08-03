@@ -91,6 +91,14 @@ public class TestAppointmentService : ITestAppointmentService
         return ServiceResult<TestAppointment>.Success(testAppointment);
     }
 
+    private async Task<bool> HasPendingAppointmentAsync(int localDrivingAppId, int testTypeId)
+    {
+        return await _context.TestAppointments
+        .AnyAsync(testApp => testApp.LocalDrivingLicenseApplicationID == localDrivingAppId
+        && testApp.TestTypeID == testTypeId
+        && !testApp.IsLocked);
+    }
+
     public async Task<ServiceResult<TestAppointmentDto>> CreateTestAppointmentAsync(CreateTestAppointmentDto dto)
     {
         ServiceResult<TestAppointment> testAppointmentEntityCreationResult = await BuildTestAppointmentEntityAsync(dto.LocalDrivingLicenseApplicationID, dto.TestTypeID, dto.AppointmentTime);
@@ -115,11 +123,5 @@ public class TestAppointmentService : ITestAppointmentService
         return ServiceResult<TestAppointmentDto>.Success(savedTestAppointment.ToDto());
     }
 
-    private async Task<bool> HasPendingAppointmentAsync(int localDrivingAppId, int testTypeId)
-    {
-        return await _context.TestAppointments
-        .AnyAsync(testApp => testApp.LocalDrivingLicenseApplicationID == localDrivingAppId
-        && testApp.TestTypeID == testTypeId
-        && !testApp.IsLocked);
-    }
+
 }
