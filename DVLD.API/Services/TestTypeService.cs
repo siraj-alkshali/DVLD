@@ -28,9 +28,4 @@ public class TestTypeService : ITestTypeService
         tt.TestTypeID, tt.TestTypeTitle, tt.TestTypeDescription, tt.TestTypeFees
         )).SingleOrDefaultAsync();
     }
-
-    public async Task<bool> TestTypeExistsAsync(int id)
-    {
-        return await _context.TestTypes.AnyAsync(tt => tt.TestTypeID == id);
-    }
 }

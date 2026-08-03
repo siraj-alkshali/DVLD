@@ -27,9 +27,4 @@ public class RoleService : IRoleService
         .Select(r => r.RoleID)
         .SingleOrDefaultAsync();
     }
-
-    public async Task<bool> RoleExistsAsync(int id)
-    {
-        return await _context.Roles.AnyAsync(r => r.RoleID == id);
-    }
 }

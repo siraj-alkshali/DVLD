@@ -27,7 +27,7 @@ public class ApplicationTypesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApplicationTypeDto>> GetApplicationTypeById(int id)
     {
-        ApplicationTypeDto? applicationType = await _applicationTypeService.GetApplicationTypeByIdAsync(id);
+        ApplicationTypeDto? applicationType = await _applicationTypeService.GetApplicationTypeDtoByIdAsync(id);
 
         if (applicationType == null)
             return NotFound();

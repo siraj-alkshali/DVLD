@@ -17,11 +17,6 @@ public class ApplicationStatusService : IApplicationStatusService
 
     public async Task<ApplicationStatusDto?> GetApplicationStatusByIdAsync(int id)
     {
-        // return await _context.ApplicationStatuses.Where(appStatus => appStatus.ApplicationStatusID == id)
-        // .Select(appStatus => new ApplicationStatusDto(
-        // appStatus.ApplicationStatusID, appStatus.StatusName
-        // )).SingleOrDefaultAsync();
-
         ApplicationStatus? appStatus = await _context.ApplicationStatuses.FindAsync(id);
 
         if (appStatus == null)
@@ -35,10 +30,5 @@ public class ApplicationStatusService : IApplicationStatusService
         return await _context.ApplicationStatuses.Select(appStatus => new ApplicationStatusDto(
         appStatus.ApplicationStatusID, appStatus.StatusName
         )).ToListAsync();
-    }
-
-    public async Task<bool> ApplicationStatusExistsAsync(int id)
-    {
-        return await _context.ApplicationStatuses.AnyAsync(appStatus => appStatus.ApplicationStatusID == id);
     }
 }

@@ -17,7 +17,7 @@ public class LicenseIssueReasonService : ILicenseIssueReasonService
     public async Task<IEnumerable<LicenseIssueReasonDto>> GetAllLicenseIssueReasonsAsync()
     {
         return await _context.LicenseIssueReasons.Select(lir => new LicenseIssueReasonDto(
-            lir.IssueReasonID, lir.IssueReasonName
+        lir.IssueReasonID, lir.IssueReasonName
         )).ToListAsync();
     }
 
@@ -27,10 +27,5 @@ public class LicenseIssueReasonService : ILicenseIssueReasonService
         .Select(lir => new LicenseIssueReasonDto(
         lir.IssueReasonID, lir.IssueReasonName
         )).SingleOrDefaultAsync();
-    }
-
-    public async Task<bool> LicenseIssueReasonExists(int id)
-    {
-        return await _context.LicenseIssueReasons.AnyAsync(lir => lir.IssueReasonID == id);
     }
 }

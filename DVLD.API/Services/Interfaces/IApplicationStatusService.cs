@@ -6,5 +6,4 @@ public interface IApplicationStatusService
 {
     Task<IEnumerable<ApplicationStatusDto>> GetAllApplicationStatusesAsync();
     Task<ApplicationStatusDto?> GetApplicationStatusByIdAsync(int id);
-    Task<bool> ApplicationStatusExistsAsync(int id);
 }

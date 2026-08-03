@@ -22,13 +22,8 @@ public class ApplicationTypeService : IApplicationTypeService
         )).ToListAsync();
     }
 
-    public async Task<ApplicationTypeDto?> GetApplicationTypeByIdAsync(int id)
+    public async Task<ApplicationTypeDto?> GetApplicationTypeDtoByIdAsync(int id)
     {
-        // return await _context.ApplicationTypes.Where(appType => appType.ApplicationTypeID == id)
-        // .Select(appType => new ApplicationTypeDto(
-        // appType.ApplicationTypeID, appType.ApplicationTypeTitle, appType.ApplicationFees
-        // )).SingleOrDefaultAsync();
-
         ApplicationType? applicationType = await _context.ApplicationTypes.FindAsync(id);
 
         if (applicationType == null)
@@ -37,8 +32,8 @@ public class ApplicationTypeService : IApplicationTypeService
         return new ApplicationTypeDto(applicationType.ApplicationTypeID, applicationType.ApplicationTypeTitle, applicationType.ApplicationFees);
     }
 
-    public async Task<bool> ApplicationTypeExists(int id)
+    public async Task<ApplicationType?> GetApplicationTypeByIdAsync(int id)
     {
-        return await _context.ApplicationTypes.AnyAsync(appType => appType.ApplicationTypeID == id);
+        return await _context.ApplicationTypes.FindAsync(id);
     }
 }

@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace DVLD.DataAccess.Entities;
 
 public class LocalDrivingLicenseApplication

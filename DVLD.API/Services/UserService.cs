@@ -192,11 +192,6 @@ public class UserService : IUserService
         return user.ToDto();
     }
 
-    public async Task<bool> UserExistsAsync(int id)
-    {
-        return await _context.Users.AnyAsync(u => u.UserID == id);
-    }
-
     public async Task<ServiceResult<UserDto>> ChangeUserStatusAsync(int id, ChangeUserStatusDto dto)
     {
         User? user = await GetUserByIdWithDetailsAsync(id);

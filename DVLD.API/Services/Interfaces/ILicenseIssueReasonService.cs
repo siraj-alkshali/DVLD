@@ -6,5 +6,4 @@ public interface ILicenseIssueReasonService
 {
     Task<IEnumerable<LicenseIssueReasonDto>> GetAllLicenseIssueReasonsAsync();
     Task<LicenseIssueReasonDto?> GetLicenseIssueReasonById(int id);
-    Task<bool> LicenseIssueReasonExists(int id);
 }
