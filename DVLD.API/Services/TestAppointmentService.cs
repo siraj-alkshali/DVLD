@@ -123,5 +123,10 @@ public class TestAppointmentService : ITestAppointmentService
         return ServiceResult<TestAppointmentDto>.Success(savedTestAppointment.ToDto());
     }
 
-
+    public async Task<bool> RetakeTestAlreadyBooked(int localAppId, int testTypeId)
+    {
+        return await _context.TestAppointments.AnyAsync(ta => ta.LocalDrivingLicenseApplicationID == localAppId
+        && ta.TestTypeID == testTypeId
+        && ta.RetakeTestApplicationID != null);
+    }
 }

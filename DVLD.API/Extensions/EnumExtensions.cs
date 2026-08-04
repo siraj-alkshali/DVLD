@@ -30,4 +30,16 @@ public static class EnumExtensions
         };
     }
 
+    public static string GetDisplayName(this enLicenseIssueReason issueReason)
+    {
+        return issueReason switch
+        {
+            enLicenseIssueReason.FirstTimeIssue => "First Time License Issue",
+            enLicenseIssueReason.Renewal => "Renewal",
+            enLicenseIssueReason.ReplacementForLostLicense => "Replacement for Lost Driving License",
+            enLicenseIssueReason.ReplacementForDamagedLicense => "Replacement for Damaged Driving License",
+            _ => issueReason.ToString()
+        };
+    }
+
 }

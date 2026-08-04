@@ -9,6 +9,7 @@ using DVLD.API.Common.Results;
 using DVLD.API.Common.Constants;
 using Microsoft.EntityFrameworkCore;
 using DVLD.API.Mappings.Applications;
+using DVLD.API.DTOs.TestAppointments;
 
 namespace DVLD.API.Services;
 
@@ -19,14 +20,18 @@ public class ApplicationService : IApplicationService
     private readonly IApplicationTypeService _applicationTypeService;
     private readonly ICurrentUserService _currentUserService;
     private readonly ILocalDrivingLicenseApplicationService _localDrivingLicenseApplicationService;
+    private readonly ITestService _testService;
+    private readonly ITestAppointmentService _testAppointmentService;
 
-    public ApplicationService(DVLDContext context, IApplicationTypeService applicationTypeService, IApplicationStatusService applicationStatusService, IPersonService personService, ICurrentUserService currentUserService, ILocalDrivingLicenseApplicationService localDrivingLicenseApplicationService)
+    public ApplicationService(DVLDContext context, IApplicationTypeService applicationTypeService, IApplicationStatusService applicationStatusService, IPersonService personService, ICurrentUserService currentUserService, ILocalDrivingLicenseApplicationService localDrivingLicenseApplicationService, ITestService testService, ITestAppointmentService testAppointmentService)
     {
         _context = context;
         _applicationTypeService = applicationTypeService;
         _personService = personService;
         _currentUserService = currentUserService;
         _localDrivingLicenseApplicationService = localDrivingLicenseApplicationService;
+        _testService = testService;
+        _testAppointmentService = testAppointmentService;
     }
 
     public async Task<PagedResultDto<ApplicationDto>> GetAllApplicationsAsync(ApplicationsQueryParameters parameters)
@@ -141,4 +146,80 @@ public class ApplicationService : IApplicationService
             throw;
         }
     }
+
+    public async Task<ServiceResult<TestAppointmentDto>> CreateNewRetakeTestApplication(CreateRetakeTestApplicationDto dto)
+    {
+        Test? failedTest = await _testService.GetTestByTestIdAsync(dto.TestID);
+
+        if (failedTest == null)
+            return ServiceResult<TestAppointmentDto>.Failure(["This failed test doesn't exist"], FailureType.Conflict);
+
+        if (failedTest.Passed)
+            return ServiceResult<TestAppointmentDto>.Failure(["This applicant has passed this test"], FailureType.Conflict);
+
+        if (await _testAppointmentService.RetakeTestAlreadyBooked(failedTest.TestAppointment.LocalDrivingLicenseApplicationID, failedTest.TestAppointment.TestTypeID))
+            return ServiceResult<TestAppointmentDto>.Failure(["This applicant already has a retake appointment for this test"], FailureType.Conflict);
+
+        int? createdByUserID = _currentUserService.UserID;
+        string? createdByUserName = _currentUserService.UserName;
+
+        if (createdByUserID == null || createdByUserName == null)
+            return ServiceResult<TestAppointmentDto>.Failure(["Unable to determine current user"], FailureType.Unauthorized);
+
+        DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            Application retakeApplication = new Application
+            {
+                ApplicantPersonID = failedTest.TestAppointment.LocalDrivingLicenseApplication.BaseApplication.ApplicantPersonID,
+                ApplicationDate = today,
+                ApplicationTypeID = (int)enApplicationType.RetakeTest,
+                ApplicationStatusID = (int)enApplicationStatus.New,
+                LastStatusDate = today,
+                PaidFees = failedTest.TestAppointment.LocalDrivingLicenseApplication.BaseApplication.ApplicationType.ApplicationFees,
+                CreatedByUserID = createdByUserID.Value
+            };
+
+            await _context.Applications.AddAsync(retakeApplication);
+            await _context.SaveChangesAsync();
+
+            TestAppointment retakeTestAppointment = new TestAppointment
+            {
+                TestTypeID = failedTest.TestAppointment.TestType.TestTypeID,
+                LocalDrivingLicenseApplicationID = failedTest.TestAppointment.LocalDrivingLicenseApplicationID,
+                AppointmentTime = dto.AppointmentTime,
+                PaidFees = failedTest.TestAppointment.LocalDrivingLicenseApplication.BaseApplication.ApplicationType.ApplicationFees,
+                CreatedByUserID = createdByUserID.Value,
+                IsLocked = false,
+                RetakeTestApplicationID = retakeApplication.ApplicationID
+            };
+
+            await _context.TestAppointments.AddAsync(retakeTestAppointment);
+            await _context.SaveChangesAsync();
+
+            TestAppointmentDto resultDto = new TestAppointmentDto(
+                retakeTestAppointment.TestAppointmentID,
+                failedTest.TestAppointment.TestType.TestTypeTitle,
+                $"{failedTest.TestAppointment.LocalDrivingLicenseApplication.BaseApplication.ApplicantPerson.FirstName} {failedTest.TestAppointment.LocalDrivingLicenseApplication.BaseApplication.ApplicantPerson.LastName}",
+                failedTest.TestAppointment.LocalDrivingLicenseApplication.BaseApplication.ApplicantPerson.NationalNo,
+                dto.AppointmentTime,
+                createdByUserName
+            );
+
+            await transaction.CommitAsync();
+
+            return ServiceResult<TestAppointmentDto>.Success(resultDto);
+        }
+
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+
+    }
+
 }

@@ -110,4 +110,29 @@ public class TestService : ITestService
     {
         return await _context.Tests.AnyAsync(t => t.TestAppointmentID == appointmentId);
     }
+
+    public async Task<Test?> GetTestByTestIdAsync(int testId)
+    {
+        return await _context.Tests.Include(t => t.TestAppointment)
+        .ThenInclude(ta => ta.LocalDrivingLicenseApplication)
+        .ThenInclude(la => la.BaseApplication)
+        .ThenInclude(ba => ba.ApplicantPerson)
+        .Include(t => t.TestAppointment)
+        .ThenInclude(t => t.TestType)
+        .Include(t => t.TestAppointment)
+        .ThenInclude(ta => ta.LocalDrivingLicenseApplication)
+        .ThenInclude(la => la.BaseApplication)
+        .ThenInclude(ba => ba.ApplicationType)
+        .SingleOrDefaultAsync(t => t.TestID == testId);
+    }
+
+    public async Task<bool> PassedAllRequiredTestsAsync(int localDrivingAppId)
+    {
+        return await _context.Tests
+            .Where(t => t.TestAppointment.LocalDrivingLicenseApplicationID == localDrivingAppId
+            && t.Passed)
+            .Select(t => t.TestAppointment.TestTypeID)
+            .Distinct()
+            .CountAsync() == 3;
+    }
 }

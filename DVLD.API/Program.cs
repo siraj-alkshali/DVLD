@@ -65,6 +65,8 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<ILocalDrivingLicenseApplicationService, LocalDrivingLicenseApplicationService>();
 builder.Services.AddScoped<ITestAppointmentService, TestAppointmentService>();
 builder.Services.AddScoped<ITestService, TestService>();
+builder.Services.AddScoped<IDriverService, DriverService>();
+builder.Services.AddScoped<ILicenseService, LicenseService>();
 
 builder.Services.AddControllers();
 

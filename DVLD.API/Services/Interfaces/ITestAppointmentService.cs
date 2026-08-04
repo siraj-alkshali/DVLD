@@ -7,4 +7,5 @@ namespace DVLD.API.Services.Interfaces;
 public interface ITestAppointmentService
 {
     Task<ServiceResult<TestAppointmentDto>> CreateTestAppointmentAsync(CreateTestAppointmentDto dto);
+    Task<bool> RetakeTestAlreadyBooked(int localAppId, int testTypeId);
 }
