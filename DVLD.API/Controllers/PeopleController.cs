@@ -4,6 +4,7 @@ using DVLD.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using DVLD.API.DTOs.Common;
 using DVLD.API.Common.QueryParameters;
+using DVLD.API.Extensions;
 
 namespace DVLD.API.Controllers;
 
@@ -22,9 +23,7 @@ public class PeopleController : ControllerBase
     [ProducesResponseType(typeof(PagedResultDto<PersonDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResultDto<PersonDto>>> GetAllPeople([FromQuery] PeopleQueryParameters parameters)
     {
-        PagedResultDto<PersonDto> pagedResults = await _personService.GetAllPeopleAsync(parameters);
-
-        return Ok(pagedResults);
+        return Ok(await _personService.GetAllPeopleAsync(parameters));
     }
 
     [HttpGet("{id}", Name = "GetPersonById")]
@@ -32,12 +31,10 @@ public class PeopleController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PersonDto>> GetPersonById(int id)
     {
-        PersonDto? person = await _personService.GetPersonByIdAsync(id);
+        PersonDto? person = await _personService.GetPersonDtoByIdAsync(id);
 
         if (person == null)
-        {
             return NotFound();
-        }
 
         return Ok(person);
     }
@@ -45,13 +42,14 @@ public class PeopleController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(PersonDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<PersonDto>> CreatePerson(CreatePersonDto createPersonDto)
     {
         ServiceResult<PersonDto> result = await _personService.CreatePersonAsync(createPersonDto);
 
         if (!result.IsSuccess)
-            return Conflict(result.Errors);
+            return this.ToActionResult(result);
 
         return CreatedAtRoute(
             "GetPersonById",
@@ -64,24 +62,13 @@ public class PeopleController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> UpdatePerson(int id, UpdatePersonDto updatePersonDto)
     {
         ServiceResult<PersonDto> result = await _personService.UpdatePersonAsync(id, updatePersonDto);
 
         if (!result.IsSuccess)
-        {
-            switch (result.ResultType)
-            {
-                case FailureType.Conflict:
-                    return Conflict(result.Errors);
-
-                case FailureType.NotFound:
-                    return NotFound();
-
-                default:
-                    return StatusCode(500);
-            }
-        }
+            return this.ToActionResult(result);
 
         return Ok(result.Data);
     }
@@ -95,19 +82,7 @@ public class PeopleController : ControllerBase
         ServiceResult<PersonDto> result = await _personService.UpdatePersonImageAsync(id, image);
 
         if (!result.IsSuccess)
-        {
-            switch (result.ResultType)
-            {
-                case FailureType.Validation:
-                    return BadRequest(result.Errors);
-
-                case FailureType.NotFound:
-                    return NotFound();
-
-                default:
-                    return StatusCode(500);
-            }
-        }
+            return this.ToActionResult(result);
 
         return Ok(result.Data);
     }
@@ -120,9 +95,7 @@ public class PeopleController : ControllerBase
         bool deleted = await _personService.DeletePersonAsync(id);
 
         if (!deleted)
-        {
             return NotFound();
-        }
 
         return NoContent();
     }
@@ -132,12 +105,10 @@ public class PeopleController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PersonDto>> GetPersonByNationalNo(string nationalNo)
     {
-        PersonDto? person = await _personService.GetPersonByNationalNoAsync(nationalNo);
+        PersonDto? person = await _personService.GetPersonDtoByNationalNoAsync(nationalNo);
 
         if (person == null)
-        {
             return NotFound();
-        }
 
         return Ok(person);
     }

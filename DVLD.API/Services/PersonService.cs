@@ -31,46 +31,56 @@ public class PersonService : IPersonService
         return await _context.People.AnyAsync(p => p.NationalNo == nationalNo);
     }
 
-    private async Task<bool> NationalNoExistsForAnotherPersonAsync(string nationalNo, int id)
+    private async Task<bool> NationalNoExistsForAnotherPersonAsync(string nationalNo, int personId)
     {
-        return await _context.People.AnyAsync(p => p.NationalNo == nationalNo && p.PersonID != id);
+        return await _context.People.AnyAsync(p => p.NationalNo == nationalNo && p.PersonID != personId);
     }
 
-    private async Task<List<string>> GetReferenceErrorsAsync(int genderId, int countryId)
+    private async Task<ServiceResult<(Gender gender, Country country)>> GetValidatedReferenceDataAsync(int genderId, int countryId)
     {
-        List<string> errors = new List<string>();
+        Gender? gender = await _genderService.GetGenderByIdAsync(genderId);
 
-        if (!await _genderService.GenderExistsAsync(genderId))
-            errors.Add("The selected gender does not exist");
+        if (gender == null)
+            return ServiceResult<(Gender gender, Country country)>.Failure(["The selected gender does not exist"], FailureType.NotFound);
 
-        if (!await _countryService.CountryExistsAsync(countryId))
-            errors.Add("The selected nationality country does not exist");
+        Country? country = await _countryService.GetCountryByIdAsync(countryId);
 
-        return errors;
+        if (country == null)
+            return ServiceResult<(Gender gender, Country country)>.Failure(["The selected nationality country does not exist"], FailureType.NotFound);
+
+        return ServiceResult<(Gender gender, Country country)>.Success((gender, country));
     }
 
-    private async Task<List<string>> GetCreatePersonValidationErrorsAsync(CreatePersonDto createPersonDto)
+    private async Task<ServiceResult<(Gender gender, Country country)>> ValidateCreatePersonAsync(CreatePersonDto createPersonDto)
     {
-        List<string> errors = new List<string>();
-
         if (await NationalNoExistsAsync(createPersonDto.NationalNo))
-            errors.Add("A person with this national number already exists");
+            return ServiceResult<(Gender gender, Country country)>.Failure(["A person with this national number already exists"], FailureType.Conflict);
 
-        errors.AddRange(await GetReferenceErrorsAsync(createPersonDto.GenderID, createPersonDto.NationalityCountryID));
+        ServiceResult<(Gender gender, Country country)> referenceDataValidation = await GetValidatedReferenceDataAsync(createPersonDto.GenderID, createPersonDto.NationalityCountryID);
 
-        return errors;
+        if (!referenceDataValidation.IsSuccess)
+            return ServiceResult<(Gender gender, Country country)>.Failure(referenceDataValidation.Errors, referenceDataValidation.ResultType!.Value);
+
+        Gender gender = referenceDataValidation.Data.gender;
+        Country country = referenceDataValidation.Data.country;
+
+        return ServiceResult<(Gender gender, Country country)>.Success((gender, country));
     }
 
-    private async Task<List<string>> GetUpdatePersonValidationErrorsAsync(UpdatePersonDto updatePersonDto, int id)
+    private async Task<ServiceResult<Person>> ValidateAndGetPersonForUpdateAsync(int personId, UpdatePersonDto updatePersonDto)
     {
-        List<string> errors = new List<string>();
+        if (await NationalNoExistsForAnotherPersonAsync(updatePersonDto.NationalNo, personId))
+            return ServiceResult<Person>.Failure(["This national number exists for another person"], FailureType.Conflict);
 
-        if (await NationalNoExistsForAnotherPersonAsync(updatePersonDto.NationalNo, id))
-            errors.Add("A person with this national number already exists");
+        Person? person = await _context.People
+        .Include(p => p.Gender)
+        .Include(p => p.NationalityCountry)
+        .SingleOrDefaultAsync(p => p.PersonID == personId);
 
-        errors.AddRange(await GetReferenceErrorsAsync(updatePersonDto.GenderID, updatePersonDto.NationalityCountryID));
+        if (person == null)
+            return ServiceResult<Person>.Failure(["This person doesn't exist"], FailureType.NotFound);
 
-        return errors;
+        return ServiceResult<Person>.Success(person);
     }
 
     public async Task<PagedResultDto<PersonDto>> GetAllPeopleAsync(PeopleQueryParameters parameters)
@@ -106,12 +116,24 @@ public class PersonService : IPersonService
             PageNumber = parameters.PageNumber,
             PageSize = parameters.PageSize
         };
-
     }
 
-    public async Task<PersonDto?> GetPersonByIdAsync(int id)
+    public async Task<Person?> GetPersonByIdWithDetailsAsync(int personId)
     {
-        Person? person = await _context.People.Where(p => p.PersonID == id)
+        return await _context.People
+        .Include(p => p.Gender)
+        .Include(p => p.NationalityCountry)
+        .SingleOrDefaultAsync(p => p.PersonID == personId);
+    }
+
+    public async Task<Person?> GetPersonByIdAsync(int personId)
+    {
+        return await _context.People.FindAsync(personId);
+    }
+
+    public async Task<PersonDto?> GetPersonDtoByIdAsync(int personId)
+    {
+        Person? person = await _context.People.Where(p => p.PersonID == personId)
                         .AsNoTracking()
                         .Include(p => p.Gender)
                         .Include(p => p.NationalityCountry)
@@ -125,60 +147,49 @@ public class PersonService : IPersonService
 
     public async Task<ServiceResult<PersonDto>> CreatePersonAsync(CreatePersonDto createPersonDto)
     {
-        List<string> errors = await GetCreatePersonValidationErrorsAsync(createPersonDto);
+        ServiceResult<(Gender gender, Country country)> createPersonDtoValidation = await ValidateCreatePersonAsync(createPersonDto);
 
-        if (errors.Count > 0)
-            return ServiceResult<PersonDto>.Failure(errors, FailureType.Conflict);
+        if (!createPersonDtoValidation.IsSuccess)
+            return ServiceResult<PersonDto>.Failure(createPersonDtoValidation.Errors, createPersonDtoValidation.ResultType!.Value);
 
-        Person person = createPersonDto.ToEntity();
+        Gender gender = createPersonDtoValidation.Data.gender;
+        Country country = createPersonDtoValidation.Data.country;
+
+        Person person = createPersonDto.ToEntity(gender, country);
 
         await _context.People.AddAsync(person);
 
         await _context.SaveChangesAsync();
 
-        Person savedPerson = await _context.People.Where(p => p.PersonID == person.PersonID)
-                        .AsNoTracking()
-                        .Include(p => p.Gender)
-                        .Include(p => p.NationalityCountry)
-                        .SingleAsync();
-
-        return ServiceResult<PersonDto>.Success(savedPerson.ToDto(_imageService.GetImageUrl(savedPerson.ImagePath)));
+        return ServiceResult<PersonDto>.Success(person.ToDto(_imageService.GetImageUrl(person.ImagePath)));
     }
 
-    public async Task<ServiceResult<PersonDto>> UpdatePersonAsync(int id, UpdatePersonDto updatePersonDto)
+    public async Task<ServiceResult<PersonDto>> UpdatePersonAsync(int personId, UpdatePersonDto updatePersonDto)
     {
+        ServiceResult<Person> updatePersonDtoValidation = await ValidateAndGetPersonForUpdateAsync(personId, updatePersonDto);
 
-        Person? person = await _context.People.Include(p => p.Gender)
-        .Include(p => p.NationalityCountry)
-        .SingleOrDefaultAsync(p => p.PersonID == id);
+        if (!updatePersonDtoValidation.IsSuccess)
+            return ServiceResult<PersonDto>.Failure(updatePersonDtoValidation.Errors, updatePersonDtoValidation.ResultType!.Value);
 
-        if (person == null)
-        {
-            return ServiceResult<PersonDto>.Failure(["The requested person was not found"], FailureType.NotFound);
-        }
+        ServiceResult<(Gender gender, Country country)> referenceDataValidation = await GetValidatedReferenceDataAsync(updatePersonDto.GenderID, updatePersonDto.NationalityCountryID);
 
-        List<string> errors = await GetUpdatePersonValidationErrorsAsync(updatePersonDto, id);
+        if (!referenceDataValidation.IsSuccess)
+            return ServiceResult<PersonDto>.Failure(referenceDataValidation.Errors, referenceDataValidation.ResultType!.Value);
 
-        if (errors.Count > 0)
-            return ServiceResult<PersonDto>.Failure(errors, FailureType.Conflict);
+        Person person = updatePersonDtoValidation.Data!;
+        Gender updatedGender = referenceDataValidation.Data.gender;
+        Country updatedCountry = referenceDataValidation.Data.country;
 
-        person.UpdateFromDto(updatePersonDto);
+        person.UpdateFromDto(updatePersonDto, updatedGender, updatedCountry);
 
         await _context.SaveChangesAsync();
 
-        Person updatedPerson = await _context.People.AsNoTracking()
-        .Include(p => p.Gender)
-        .Include(p => p.NationalityCountry)
-        .SingleAsync(p => p.PersonID == person.PersonID);
-
-        return ServiceResult<PersonDto>.Success(updatedPerson.ToDto(_imageService.GetImageUrl(updatedPerson.ImagePath)));
+        return ServiceResult<PersonDto>.Success(person.ToDto(_imageService.GetImageUrl(person.ImagePath)));
     }
 
     public async Task<ServiceResult<PersonDto>> UpdatePersonImageAsync(int personId, IFormFile image)
     {
-        Person? person = await _context.People.Include(p => p.Gender)
-        .Include(p => p.NationalityCountry)
-        .SingleAsync(p => p.PersonID == personId);
+        Person? person = await GetPersonByIdWithDetailsAsync(personId);
 
         if (person == null)
             return ServiceResult<PersonDto>.Failure(["The requested person was not found"], FailureType.NotFound);
@@ -186,7 +197,7 @@ public class PersonService : IPersonService
         ServiceResult<string> imageUploadResult = await _imageService.UploadImageAsync(image);
 
         if (!imageUploadResult.IsSuccess)
-            return ServiceResult<PersonDto>.Failure(imageUploadResult.Errors, FailureType.Validation);
+            return ServiceResult<PersonDto>.Failure(imageUploadResult.Errors, FailureType.ValidationError);
 
         string? oldImage = person.ImagePath;
 
@@ -200,15 +211,13 @@ public class PersonService : IPersonService
         return ServiceResult<PersonDto>.Success(person.ToDto(_imageService.GetImageUrl(person.ImagePath)));
     }
 
-    public async Task<bool> DeletePersonAsync(int id)
+    public async Task<bool> DeletePersonAsync(int personId)
     {
         Person? person = await _context.People
-            .FindAsync(id);
+            .FindAsync(personId);
 
         if (person == null)
-        {
             return false;
-        }
 
         string? imagePath = person.ImagePath;
 
@@ -222,13 +231,14 @@ public class PersonService : IPersonService
         return true;
     }
 
-    public async Task<PersonDto?> GetPersonByNationalNoAsync(string nationalNo)
+    public async Task<PersonDto?> GetPersonDtoByNationalNoAsync(string nationalNo)
     {
-        Person? person = await _context.People.Where(p => p.NationalNo == nationalNo)
-                        .AsNoTracking()
-                        .Include(p => p.Gender)
-                        .Include(p => p.NationalityCountry)
-                        .SingleOrDefaultAsync();
+        Person? person = await _context.People
+        .Where(p => p.NationalNo == nationalNo)
+        .AsNoTracking()
+        .Include(p => p.Gender)
+        .Include(p => p.NationalityCountry)
+        .SingleOrDefaultAsync();
 
         if (person == null)
             return null;
@@ -236,8 +246,8 @@ public class PersonService : IPersonService
         return person.ToDto(_imageService.GetImageUrl(person.ImagePath));
     }
 
-    public async Task<bool> PersonExistsAsync(int id)
+    public async Task<bool> PersonExistsAsync(int personId)
     {
-        return await _context.People.AnyAsync(p => p.PersonID == id);
+        return await _context.People.AnyAsync(p => p.PersonID == personId);
     }
 }

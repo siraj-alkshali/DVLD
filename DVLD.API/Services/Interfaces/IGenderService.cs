@@ -1,10 +1,11 @@
 using DVLD.API.DTOs.Countries;
+using DVLD.DataAccess.Entities;
 
 namespace DVLD.API.Services.Interfaces;
 
 public interface IGenderService
 {
-    Task<GenderDto?> GetGenderByIdAsync(int id);
     Task<IEnumerable<GenderDto>> GetAllGendersAsync();
-    Task<bool> GenderExistsAsync(int id);
+    Task<Gender?> GetGenderByIdAsync(int genderId);
+    Task<GenderDto?> GetGenderDtoByIdAsync(int genderId);
 }

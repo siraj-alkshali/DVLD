@@ -1,3 +1,4 @@
+using DVLD.API.Common.Constants;
 using DVLD.API.DTOs.ApplicationTypes;
 using DVLD.API.Services.Interfaces;
 using DVLD.DataAccess.Data;
@@ -18,22 +19,15 @@ public class ApplicationTypeService : IApplicationTypeService
     public async Task<IEnumerable<ApplicationTypeDto>> GetAllApplicationTypesAsync()
     {
         return await _context.ApplicationTypes.Select(appType => new ApplicationTypeDto(
-            appType.ApplicationTypeID, appType.ApplicationTypeTitle, appType.ApplicationFees
+        appType.ApplicationTypeID, appType.ApplicationTypeTitle, appType.ApplicationFees
         )).ToListAsync();
     }
 
-    public async Task<ApplicationTypeDto?> GetApplicationTypeDtoByIdAsync(int id)
+    public async Task<decimal> GetApplicationTypeFeesAsync(enApplicationType applicationType)
     {
-        ApplicationType? applicationType = await _context.ApplicationTypes.FindAsync(id);
-
-        if (applicationType == null)
-            return null;
-
-        return new ApplicationTypeDto(applicationType.ApplicationTypeID, applicationType.ApplicationTypeTitle, applicationType.ApplicationFees);
-    }
-
-    public async Task<ApplicationType?> GetApplicationTypeByIdAsync(int id)
-    {
-        return await _context.ApplicationTypes.FindAsync(id);
+        return await _context.ApplicationTypes
+        .Where(appType => appType.ApplicationTypeID == (int)applicationType)
+        .Select(appType => appType.ApplicationFees)
+        .SingleAsync();
     }
 }

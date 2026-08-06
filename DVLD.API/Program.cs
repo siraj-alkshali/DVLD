@@ -56,7 +56,6 @@ builder.Services.AddScoped<IApplicationStatusService, ApplicationStatusService>(
 builder.Services.AddScoped<ILicenseIssueReasonService, LicenseIssueReasonService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
-builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
@@ -67,6 +66,7 @@ builder.Services.AddScoped<ITestAppointmentService, TestAppointmentService>();
 builder.Services.AddScoped<ITestService, TestService>();
 builder.Services.AddScoped<IDriverService, DriverService>();
 builder.Services.AddScoped<ILicenseService, LicenseService>();
+builder.Services.AddScoped<IDetainedLicenseService, DetainedLicenseService>();
 
 builder.Services.AddControllers();
 

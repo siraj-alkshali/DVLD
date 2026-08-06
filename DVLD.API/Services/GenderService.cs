@@ -23,15 +23,15 @@ public class GenderService : IGenderService
         .ToListAsync();
     }
 
-    public async Task<GenderDto?> GetGenderByIdAsync(int id)
+    public async Task<Gender?> GetGenderByIdAsync(int genderId)
     {
-        return await _context.Genders.AsNoTracking()
-        .Where(g => g.GenderID == id)
-        .Select(g => new GenderDto(g.GenderID, g.GenderName)).SingleOrDefaultAsync();
+        return await _context.Genders.FindAsync(genderId);
     }
 
-    public async Task<bool> GenderExistsAsync(int id)
+    public async Task<GenderDto?> GetGenderDtoByIdAsync(int genderId)
     {
-        return await _context.Genders.AnyAsync(g => g.GenderID == id);
+        return await _context.Genders.AsNoTracking()
+        .Where(g => g.GenderID == genderId)
+        .Select(g => new GenderDto(g.GenderID, g.GenderName)).SingleOrDefaultAsync();
     }
 }

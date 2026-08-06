@@ -16,7 +16,7 @@ public class LicensesController : ControllerBase
         _licenseService = licenseService;
     }
 
-    [HttpPost("first-time-license")]
+    [HttpPost]
     // [ProducesResponseType(typeof(ApplicationDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

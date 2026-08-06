@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using DVLD.API.Extensions;
 using DVLD.API.Common.QueryParameters;
 using DVLD.API.DTOs.Common;
+using DVLD.API.Common.Constants;
 
 namespace DVLD.API.Services;
 
@@ -17,26 +18,24 @@ public class UserService : IUserService
     private readonly DVLDContext _context;
     private readonly IPersonService _personService;
     private readonly IPasswordHasherService _passwordHasherService;
-    private readonly IRoleService _roleService;
 
-    public UserService(DVLDContext context, IPersonService personService, IPasswordHasherService passwordHasherService, IRoleService roleService)
+    public UserService(DVLDContext context, IPersonService personService, IPasswordHasherService passwordHasherService)
     {
         _context = context;
         _personService = personService;
         _passwordHasherService = passwordHasherService;
-        _roleService = roleService;
     }
 
-    private async Task<User?> GetUserByIdWithDetailsAsync(int id, bool readOnly = false)
+    private async Task<User?> GetUserByIdWithDetailsAsync(int userId, bool readOnly = false)
     {
         IQueryable<User> query = _context.Users
-            .Include(u => u.Person)
-            .Include(u => u.Role);
+        .Include(u => u.Person)
+        .Include(u => u.Role);
 
         if (readOnly)
             query = query.AsNoTracking();
 
-        return await query.SingleOrDefaultAsync(u => u.UserID == id);
+        return await query.SingleOrDefaultAsync(u => u.UserID == userId);
     }
 
     private async Task<bool> UserExistsForPersonAsync(int personId)
@@ -54,71 +53,86 @@ public class UserService : IUserService
         return await _context.Users.AnyAsync(u => u.UserName == userName && u.UserID != userId);
     }
 
-    private async Task<List<string>> GetCreateUserValidationErrorsAsync(int personId, string userName)
+    private async Task<ServiceResult<Person>> ValidateAndGetPersonAsync(int personId, string userName)
     {
-        List<string> errors = new List<string>();
+        Person? person = await _personService.GetPersonByIdAsync(personId);
 
-        if (!await _personService.PersonExistsAsync(personId))
-            errors.Add("The specified person does not exist");
+        if (person == null)
+            return ServiceResult<Person>.Failure(["This person does not exist"], FailureType.NotFound);
 
         if (await UserExistsForPersonAsync(personId))
-            errors.Add("This person already has an account");
+            return ServiceResult<Person>.Failure(["This person already has a user account"], FailureType.Conflict);
 
         if (await UserNameExistsAsync(userName))
-            errors.Add("This username already exists");
+            return ServiceResult<Person>.Failure(["This username is already used"], FailureType.Conflict);
 
-        return errors;
+        return ServiceResult<Person>.Success(person);
+    }
+
+    private async Task<ServiceResult<User>> ValidateAndGetUserForUserNameChangeAsync(int userId, ChangeUserNameDto changeUserNameDto)
+    {
+        User? user = await GetUserByIdWithDetailsAsync(userId);
+
+        if (user == null)
+            return ServiceResult<User>.Failure(["This user does not exist"], FailureType.NotFound);
+
+        if (await UserNameExistsForAnotherUserAsync(changeUserNameDto.UserName, userId))
+            return ServiceResult<User>.Failure(["This username has been already taken by another user"], FailureType.Conflict);
+
+        return ServiceResult<User>.Success(user);
+    }
+
+    private async Task<ServiceResult<User>> ValidateAndGetUserForPasswordChangeAsync(int userId, ChangePasswordDto changePasswordDto)
+    {
+        User? user = await GetUserByIdWithDetailsAsync(userId);
+
+        if (user == null)
+            return ServiceResult<User>.Failure(["The requested user was not found"], FailureType.NotFound);
+
+        if (!_passwordHasherService.VerifyPassword(changePasswordDto.CurrentPassword, user.PasswordHash))
+            return ServiceResult<User>.Failure(["The current password is incorrect"], FailureType.ValidationError);
+
+        if (_passwordHasherService.VerifyPassword(changePasswordDto.NewPassword, user.PasswordHash))
+            return ServiceResult<User>.Failure(["The new password must be different from the current password"], FailureType.ValidationError);
+
+        return ServiceResult<User>.Success(user);
     }
 
     public async Task<ServiceResult<UserDto>> CreateUserAsync(CreateUserDto createUserDto)
     {
         string normalizedUserName = StringUtilities.NormalizeUserName(createUserDto.UserName);
 
-        List<string> errors = await GetCreateUserValidationErrorsAsync(createUserDto.PersonID, normalizedUserName);
+        ServiceResult<Person> createUserDtoValidation = await ValidateAndGetPersonAsync(createUserDto.PersonID, normalizedUserName);
 
-        if (errors.Count > 0)
-            return ServiceResult<UserDto>.Failure(errors, FailureType.Conflict);
+        if (!createUserDtoValidation.IsSuccess)
+            return ServiceResult<UserDto>.Failure(createUserDtoValidation.Errors, createUserDtoValidation.ResultType!.Value);
 
-        int? roleId = await _roleService.GetEmployeeRoleIDAsync();
-
-        if (roleId == null)
-            return ServiceResult<UserDto>.Failure(["The role ID does not exist"], FailureType.InternalError);
+        Person person = createUserDtoValidation.Data!;
 
         string passwordHash = _passwordHasherService.HashPassword(createUserDto.Password);
 
-        User user = new User
-        {
-            PersonID = createUserDto.PersonID,
-            UserName = normalizedUserName,
-            PasswordHash = passwordHash,
-            IsActive = true,
-            RoleID = roleId.Value
-        };
+        User user = createUserDto.ToEntity(normalizedUserName, passwordHash, enRoleType.Employee, person);
 
         _context.Users.Add(user);
 
         await _context.SaveChangesAsync();
 
-        User savedUser = await _context.Users.Include(u => u.Person)
-        .Include(u => u.Role)
-        .SingleAsync(u => u.UserID == user.UserID);
-
-        return ServiceResult<UserDto>.Success(savedUser.ToDto());
+        return ServiceResult<UserDto>.Success(user.ToDto());
     }
 
-    public async Task<ServiceResult<UserDto>> ChangeUserNameAsync(int id, ChangeUserNameDto dto)
+    public async Task<ServiceResult<UserDto>> ChangeUserNameAsync(int userId, ChangeUserNameDto changeUserNameDto)
     {
-        User? user = await GetUserByIdWithDetailsAsync(id);
+        string normalizedUserName = StringUtilities.NormalizeUserName(changeUserNameDto.UserName);
 
-        if (user == null)
-            return ServiceResult<UserDto>.Failure(["The requested user was not found"], FailureType.NotFound);
+        ServiceResult<User> changeUserNameValidation = await ValidateAndGetUserForUserNameChangeAsync(userId, changeUserNameDto);
 
-        string normalizedUserName = StringUtilities.NormalizeUserName(dto.UserName);
+        if (!changeUserNameValidation.IsSuccess)
+            return ServiceResult<UserDto>.Failure(changeUserNameValidation.Errors, changeUserNameValidation.ResultType!.Value);
+
+        User user = changeUserNameValidation.Data!;
+
         if (user.UserName == normalizedUserName)
             return ServiceResult<UserDto>.Success(user.ToDto());
-
-        if (await UserNameExistsForAnotherUserAsync(dto.UserName, user.UserID))
-            return ServiceResult<UserDto>.Failure(["This username is already taken by another user"], FailureType.Conflict);
 
         user.UserName = normalizedUserName;
 
@@ -127,24 +141,16 @@ public class UserService : IUserService
         return ServiceResult<UserDto>.Success(user.ToDto());
     }
 
-    public async Task<ServiceResult<UserDto>> ChangePasswordAsync(int id, ChangePasswordDto dto)
+    public async Task<ServiceResult<UserDto>> ChangePasswordAsync(int userId, ChangePasswordDto changePasswordDto)
     {
-        User? user = await GetUserByIdWithDetailsAsync(id);
+        ServiceResult<User> changePasswordValidation = await ValidateAndGetUserForPasswordChangeAsync(userId, changePasswordDto);
 
-        if (user == null)
-            return ServiceResult<UserDto>.Failure(["The requested user was not found"], FailureType.NotFound);
+        if (!changePasswordValidation.IsSuccess)
+            return ServiceResult<UserDto>.Failure(changePasswordValidation.Errors, changePasswordValidation.ResultType!.Value);
 
-        if (!_passwordHasherService.VerifyPassword(dto.CurrentPassword, user.PasswordHash))
-            return ServiceResult<UserDto>.Failure(["The current password is incorrect"], FailureType.Validation);
+        User user = changePasswordValidation.Data!;
 
-        if (_passwordHasherService.VerifyPassword(dto.NewPassword, user.PasswordHash))
-        {
-            return ServiceResult<UserDto>.Failure(
-                ["The new password must be different from the current password"],
-                FailureType.Validation);
-        }
-
-        string passwordHash = _passwordHasherService.HashPassword(dto.NewPassword);
+        string passwordHash = _passwordHasherService.HashPassword(changePasswordDto.NewPassword);
 
         user.PasswordHash = passwordHash;
 
@@ -182,9 +188,9 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<UserDto?> GetUserByIdAsync(int id)
+    public async Task<UserDto?> GetUserDtoByIdAsync(int userId)
     {
-        User? user = await GetUserByIdWithDetailsAsync(id);
+        User? user = await GetUserByIdWithDetailsAsync(userId);
 
         if (user == null)
             return null;
@@ -192,17 +198,29 @@ public class UserService : IUserService
         return user.ToDto();
     }
 
-    public async Task<ServiceResult<UserDto>> ChangeUserStatusAsync(int id, ChangeUserStatusDto dto)
+    private async Task<ServiceResult<User>> ValidateAndGetUserForChangeUserStatusAsync(int userId, ChangeUserStatusDto changeUserStatusDto)
     {
-        User? user = await GetUserByIdWithDetailsAsync(id);
+        User? user = await GetUserByIdWithDetailsAsync(userId);
 
         if (user == null)
-            return ServiceResult<UserDto>.Failure(["The requested user was not found"], FailureType.NotFound);
+            return ServiceResult<User>.Failure(["The requested user was not found"], FailureType.NotFound);
 
-        if (user.IsActive == dto.IsActive)
-            return ServiceResult<UserDto>.Failure([$"This user account is already {(user.IsActive ? "activated" : "deactivated")}"], FailureType.Conflict);
+        if (user.IsActive == changeUserStatusDto.IsActive)
+            return ServiceResult<User>.Failure([$"This user account is already {(user.IsActive ? "activated" : "deactivated")}"], FailureType.Conflict);
 
-        user.IsActive = dto.IsActive;
+        return ServiceResult<User>.Success(user);
+    }
+
+    public async Task<ServiceResult<UserDto>> ChangeUserStatusAsync(int userId, ChangeUserStatusDto changeUserStatusDto)
+    {
+        ServiceResult<User> changeUserStatusValidation = await ValidateAndGetUserForChangeUserStatusAsync(userId, changeUserStatusDto);
+
+        if (!changeUserStatusValidation.IsSuccess)
+            return ServiceResult<UserDto>.Failure(changeUserStatusValidation.Errors, changeUserStatusValidation.ResultType!.Value);
+
+        User user = changeUserStatusValidation.Data!;
+
+        user.IsActive = changeUserStatusDto.IsActive;
 
         await _context.SaveChangesAsync();
 

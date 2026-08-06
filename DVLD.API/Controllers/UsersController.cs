@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using DVLD.API.Common.Results;
 using DVLD.API.DTOs.Common;
 using DVLD.API.Common.QueryParameters;
+using DVLD.API.Extensions;
 
 namespace DVLD.API.Controllers;
 
@@ -30,7 +31,7 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserDto>> GetUserByUserId(int id)
     {
-        UserDto? user = await _userService.GetUserByIdAsync(id);
+        UserDto? user = await _userService.GetUserDtoByIdAsync(id);
 
         if (user == null)
             return NotFound();
@@ -41,22 +42,14 @@ public class UsersController : ControllerBase
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UserDto>> CreateUser(CreateUserDto createUserDto)
     {
         ServiceResult<UserDto> result = await _userService.CreateUserAsync(createUserDto);
 
         if (!result.IsSuccess)
-        {
-            switch (result.ResultType)
-            {
-                case FailureType.Conflict:
-                    return Conflict(result.Errors);
-
-                default:
-                    return StatusCode(500);
-            }
-        }
+            return this.ToActionResult(result);
 
         return CreatedAtRoute(
             "GetUserById",
@@ -75,19 +68,8 @@ public class UsersController : ControllerBase
         ServiceResult<UserDto> result = await _userService.ChangeUserNameAsync(id, changeUserNameDto);
 
         if (!result.IsSuccess)
-        {
-            switch (result.ResultType)
-            {
-                case FailureType.NotFound:
-                    return NotFound(result.Errors);
+            return this.ToActionResult(result);
 
-                case FailureType.Conflict:
-                    return Conflict(result.Errors);
-
-                default:
-                    return StatusCode(500);
-            }
-        }
 
         return Ok(result.Data);
     }
@@ -96,28 +78,12 @@ public class UsersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<UserDto>> ChangePassword(int id, ChangePasswordDto changePasswordDto)
     {
         ServiceResult<UserDto> result = await _userService.ChangePasswordAsync(id, changePasswordDto);
 
         if (!result.IsSuccess)
-        {
-            switch (result.ResultType)
-            {
-                case FailureType.NotFound:
-                    return NotFound(result.Errors);
-
-                case FailureType.Conflict:
-                    return Conflict(result.Errors);
-
-                case FailureType.Validation:
-                    return BadRequest(result.Errors);
-
-                default:
-                    return StatusCode(500);
-            }
-        }
+            return this.ToActionResult(result);
 
         return Ok(result.Data);
     }
@@ -131,19 +97,7 @@ public class UsersController : ControllerBase
         ServiceResult<UserDto> result = await _userService.ChangeUserStatusAsync(id, dto);
 
         if (!result.IsSuccess)
-        {
-            switch (result.ResultType)
-            {
-                case FailureType.NotFound:
-                    return NotFound(result.Errors);
-
-                case FailureType.Conflict:
-                    return Conflict(result.Errors);
-
-                default:
-                    return StatusCode(500);
-            }
-        }
+            return this.ToActionResult(result);
 
         return Ok(result.Data);
     }

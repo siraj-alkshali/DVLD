@@ -17,6 +17,8 @@ public class ImagesController : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ServiceResult<string>>> UploadImage(IFormFile file)
     {
         ServiceResult<string> result = await _imageService.UploadImageAsync(file);
@@ -28,6 +30,7 @@ public class ImagesController : ControllerBase
     }
 
     [HttpGet("{fileName}")]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult GetImage(string fileName)
     {
         FileResultData? file = _imageService.GetImage(fileName);

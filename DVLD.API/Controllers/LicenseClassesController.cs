@@ -29,7 +29,7 @@ public class LicenseClassesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<LicenseClassDto>> GetLicenseClassById(int id)
     {
-        LicenseClassDto? licenseClass = await _licenseClassService.GetLicenseClassByIdAsync(id);
+        LicenseClassDto? licenseClass = await _licenseClassService.GetLicenseClassDtoByIdAsync(id);
 
         if (licenseClass == null)
             return NotFound();

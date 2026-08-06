@@ -2,10 +2,11 @@ namespace DVLD.API.Common.Results;
 
 public enum FailureType
 {
+    ValidationError,
     NotFound,
+    Conflict,
     Unauthorized,
     Forbidden,
-    Conflict,
-    Validation,
-    InternalError
+    BadRequest,
+    InternalServerError
 }

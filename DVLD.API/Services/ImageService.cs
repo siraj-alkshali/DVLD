@@ -27,31 +27,28 @@ public class ImageService : IImageService
             || buffer.SequenceEqual(ImageSettings.PngSignature);
     }
 
-    private async Task<List<string>> ValidateImage(IFormFile file)
+    private async Task<ServiceResult> ValidateImage(IFormFile file)
     {
-        List<string> errors = new List<string>();
-
         string fileExtension = Path.GetExtension(file.FileName).ToLower();
 
         if (!ImageSettings.AllowedExtensions.Contains(fileExtension))
-            errors.Add("Only jpg, jpeg and png images are allowed");
+            return ServiceResult.Failure(["Only jpg, jpeg and png images are allowed"], FailureType.BadRequest);
 
         if (file.Length > ImageSettings.MaxSizeInBytes)
-            errors.Add("File size should not exceed 4 MB");
+            return ServiceResult.Failure(["File size should not exceed 4 MB"], FailureType.BadRequest);
 
         if (!await IsValidImageContentAsync(file))
-            errors.Add("The uploaded file is not a valid image");
+            return ServiceResult.Failure(["The uploaded file is not a valid image"], FailureType.BadRequest);
 
-        return errors;
+        return ServiceResult.Success();
     }
 
     public async Task<ServiceResult<string>> UploadImageAsync(IFormFile file)
     {
+        ServiceResult uploadImageValidation = await ValidateImage(file);
 
-        List<string> errors = await ValidateImage(file);
-
-        if (errors.Count > 0)
-            return ServiceResult<string>.Failure(errors, FailureType.Validation);
+        if (!uploadImageValidation.IsSuccess)
+            return ServiceResult<string>.Failure(uploadImageValidation.Errors, FailureType.ValidationError);
 
         string imagesFolder = Path.Combine(_environment.WebRootPath, "images");
 

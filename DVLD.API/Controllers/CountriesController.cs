@@ -28,7 +28,7 @@ public class CountriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CountryDto>> GetCountryById(int id)
     {
-        CountryDto? country = await _countryService.GetCountryByIdAsync(id);
+        CountryDto? country = await _countryService.GetCountryDtoByIdAsync(id);
 
         if (country == null)
             return NotFound();

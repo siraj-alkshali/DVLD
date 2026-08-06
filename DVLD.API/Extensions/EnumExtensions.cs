@@ -4,6 +4,16 @@ namespace DVLD.API.Extensions;
 
 public static class EnumExtensions
 {
+    public static string GetDisplayName(this enRoleType roleType)
+    {
+        return roleType switch
+        {
+            enRoleType.Admin => "Admin",
+            enRoleType.Employee => "Employee",
+            _ => roleType.ToString()
+        };
+    }
+
     public static string GetDisplayName(this enTestType testType)
     {
         return testType switch

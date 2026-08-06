@@ -21,7 +21,7 @@ public static class PersonMappingExtensions
         );
     }
 
-    public static Person ToEntity(this CreatePersonDto dto)
+    public static Person ToEntity(this CreatePersonDto dto, Gender gender, Country country)
     {
         return new Person
         {
@@ -31,15 +31,17 @@ public static class PersonMappingExtensions
             ThirdName = dto.ThirdName,
             LastName = dto.LastName,
             DateOfBirth = dto.DateOfBirth,
-            GenderID = dto.GenderID,
+            GenderID = gender.GenderID,
+            Gender = gender,
             Address = dto.Address,
             Phone = dto.Phone,
             Email = dto.Email,
-            NationalityCountryID = dto.NationalityCountryID
+            NationalityCountryID = country.CountryID,
+            NationalityCountry = country
         };
     }
 
-    public static void UpdateFromDto(this Person person, UpdatePersonDto dto)
+    public static void UpdateFromDto(this Person person, UpdatePersonDto dto, Gender updatedGender, Country updatedCountry)
     {
         person.NationalNo = dto.NationalNo;
         person.FirstName = dto.FirstName;
@@ -48,9 +50,11 @@ public static class PersonMappingExtensions
         person.LastName = dto.LastName;
         person.DateOfBirth = dto.DateOfBirth;
         person.GenderID = dto.GenderID;
+        person.Gender = updatedGender;
         person.Address = dto.Address;
         person.Phone = dto.Phone;
         person.Email = dto.Email;
         person.NationalityCountryID = dto.NationalityCountryID;
+        person.NationalityCountry = updatedCountry;
     }
 }

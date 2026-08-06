@@ -106,4 +106,13 @@ public class LicenseService : ILicenseService
             throw;
         }
     }
+
+    public async Task<License?> GetLicenseWithDetailsByIdAsync(int licenseId)
+    {
+        return await _context.Licenses
+        .Include(l => l.Driver)
+        .ThenInclude(d => d.Person)
+        .Include(l => l.LicenseClass)
+        .SingleOrDefaultAsync(l => l.LicenseID == licenseId);
+    }
 }

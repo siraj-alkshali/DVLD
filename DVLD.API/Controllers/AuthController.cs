@@ -3,7 +3,7 @@ using DVLD.API.DTOs.Auth;
 using DVLD.API.DTOs.Users;
 using DVLD.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using DVLD.API.Extensions;
 using Microsoft.AspNetCore.Authorization;
 
 namespace DVLD.API.Controllers;
@@ -30,19 +30,7 @@ public class AuthController : ControllerBase
         ServiceResult<LoginResponseDto> result = await _authService.LoginAsync(dto);
 
         if (!result.IsSuccess)
-        {
-            switch (result.ResultType)
-            {
-                case FailureType.Unauthorized:
-                    return Unauthorized(result.Errors);
-
-                case FailureType.Forbidden:
-                    return StatusCode(StatusCodes.Status403Forbidden, result.Errors);
-
-                default:
-                    return StatusCode(500);
-            }
-        }
+            return this.ToActionResult(result);
 
         return Ok(result.Data);
     }
@@ -56,7 +44,7 @@ public class AuthController : ControllerBase
         ServiceResult<LoginResponseDto> result = await _authService.RefreshTokenAsync(dto);
 
         if (!result.IsSuccess)
-            return Unauthorized(result.Errors);
+            return this.ToActionResult(result);
 
         return Ok(result.Data);
     }
@@ -70,7 +58,7 @@ public class AuthController : ControllerBase
         if (_currentUserService.UserID == null)
             return Unauthorized();
 
-        UserDto? user = await _authService.GetUserByUserIdAsync(_currentUserService.UserID.Value);
+        UserDto? user = await _authService.GetUserDtoByUserIdAsync(_currentUserService.UserID.Value);
 
         if (user == null)
             return Unauthorized();
@@ -87,7 +75,7 @@ public class AuthController : ControllerBase
         ServiceResult<bool> result = await _authService.LogoutAsync(dto);
 
         if (!result.IsSuccess)
-            return Unauthorized(result.Errors);
+            return this.ToActionResult(result);
 
         return Ok(result.Data);
     }

@@ -49,6 +49,8 @@ public class ApplicationsController : ControllerBase
         return Ok(result.Data);
     }
 
+
+
     [HttpPost("retake-test-application")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

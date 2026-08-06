@@ -33,17 +33,42 @@ public class AuthService : IAuthService
         .SingleOrDefaultAsync(u => u.UserName == userName);
     }
 
-    public async Task<ServiceResult<LoginResponseDto>> LoginAsync(LoginRequestDto dto)
+    private async Task<ServiceResult<User>> ValidateLoginCredentialsAsync(string userName, string password)
     {
-        string normalizedUserName = StringUtilities.NormalizeUserName(dto.UserName);
+        User? user = await GetUserByUserNameAsync(userName);
 
-        User? user = await GetUserByUserNameAsync(normalizedUserName);
-
-        if (user == null || !_passwordHasherService.VerifyPassword(dto.Password, user.PasswordHash))
-            return ServiceResult<LoginResponseDto>.Failure(["Invalid credentials"], FailureType.Unauthorized);
+        if (user == null || !_passwordHasherService.VerifyPassword(password, user.PasswordHash))
+            return ServiceResult<User>.Failure(["Invalid credentials"], FailureType.Unauthorized);
 
         if (!user.IsActive)
-            return ServiceResult<LoginResponseDto>.Failure(["This user is not active"], FailureType.Forbidden);
+            return ServiceResult<User>.Failure(["This user is not active"], FailureType.Forbidden);
+
+        return ServiceResult<User>.Success(user);
+    }
+
+    private async Task<ServiceResult<RefreshToken>> ValidateRefreshTokenAsync(string rawRefreshToken)
+    {
+        RefreshToken? refreshToken = await _refreshTokenService.GetRefreshTokenAsync(rawRefreshToken);
+
+        if (refreshToken == null)
+            return ServiceResult<RefreshToken>.Failure(["Invalid refresh token"], FailureType.Unauthorized);
+
+        if (!_refreshTokenService.IsRefreshTokenValidAsync(refreshToken))
+            return ServiceResult<RefreshToken>.Failure(["Refresh token expired or revoked"], FailureType.Unauthorized);
+
+        return ServiceResult<RefreshToken>.Success(refreshToken);
+    }
+
+    public async Task<ServiceResult<LoginResponseDto>> LoginAsync(LoginRequestDto loginRequestDto)
+    {
+        string normalizedUserName = StringUtilities.NormalizeUserName(loginRequestDto.UserName);
+
+        ServiceResult<User> loginRequestDtoValidation = await ValidateLoginCredentialsAsync(normalizedUserName, loginRequestDto.Password);
+
+        if (!loginRequestDtoValidation.IsSuccess)
+            return ServiceResult<LoginResponseDto>.Failure(loginRequestDtoValidation.Errors, loginRequestDtoValidation.ResultType!.Value);
+
+        User user = loginRequestDtoValidation.Data!;
 
         string token = _jwtService.GenerateToken(user);
 
@@ -59,13 +84,12 @@ public class AuthService : IAuthService
 
     public async Task<ServiceResult<LoginResponseDto>> RefreshTokenAsync(RefreshTokenRequestDto dto)
     {
-        RefreshToken? refreshToken = await _refreshTokenService.GetRefreshTokenAsync(dto.RefreshToken);
+        ServiceResult<RefreshToken> refreshTokenRequestValidation = await ValidateRefreshTokenAsync(dto.RefreshToken);
 
-        if (refreshToken == null)
-            return ServiceResult<LoginResponseDto>.Failure(["Invalid refresh token"], FailureType.Unauthorized);
+        if (!refreshTokenRequestValidation.IsSuccess)
+            return ServiceResult<LoginResponseDto>.Failure(refreshTokenRequestValidation.Errors, refreshTokenRequestValidation.ResultType!.Value);
 
-        if (!_refreshTokenService.IsRefreshTokenValidAsync(refreshToken))
-            return ServiceResult<LoginResponseDto>.Failure(["Refresh token expired or revoked"], FailureType.Unauthorized);
+        RefreshToken refreshToken = refreshTokenRequestValidation.Data!;
 
         User user = refreshToken.User;
 
@@ -94,13 +118,13 @@ public class AuthService : IAuthService
         return ServiceResult<bool>.Success(true);
     }
 
-    public async Task<UserDto?> GetUserByUserIdAsync(int userId)
+    public async Task<UserDto?> GetUserDtoByUserIdAsync(int userId)
     {
         User? user = await _context.Users
-            .AsNoTracking()
-            .Include(u => u.Person)
-            .Include(u => u.Role)
-            .SingleOrDefaultAsync(u => u.UserID == userId);
+        .AsNoTracking()
+        .Include(u => u.Person)
+        .Include(u => u.Role)
+        .SingleOrDefaultAsync(u => u.UserID == userId);
 
         if (user == null)
             return null;

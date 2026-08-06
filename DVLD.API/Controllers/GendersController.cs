@@ -28,7 +28,7 @@ public class GendersController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<GenderDto>> GetGenderById(int id)
     {
-        GenderDto? gender = await _genderService.GetGenderByIdAsync(id);
+        GenderDto? gender = await _genderService.GetGenderDtoByIdAsync(id);
 
         if (gender == null)
             return NotFound();

@@ -1,10 +1,11 @@
 using DVLD.API.DTOs.Countries;
+using DVLD.DataAccess.Entities;
 
 namespace DVLD.API.Services.Interfaces;
 
 public interface ICountryService
 {
     Task<IEnumerable<CountryDto>> GetAllCountriesAsync();
-    Task<CountryDto?> GetCountryByIdAsync(int id);
-    Task<bool> CountryExistsAsync(int id);
+    Task<Country?> GetCountryByIdAsync(int countryId);
+    Task<CountryDto?> GetCountryDtoByIdAsync(int countryId);
 }

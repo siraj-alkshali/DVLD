@@ -67,6 +67,13 @@ public class TestService : ITestService
 
         await _context.Tests.AddAsync(test);
         testApp.IsLocked = true;
+
+        if (testApp.RetakeTestApplicationID != null)
+        {
+            testApp.LocalDrivingLicenseApplication.BaseApplication.ApplicationStatusID = (int)enApplicationStatus.Completed;
+            testApp.LocalDrivingLicenseApplication.BaseApplication.LastStatusDate = DateOnly.FromDateTime(DateTime.Now);
+        }
+
         await _context.SaveChangesAsync();
 
         Test savedTest = await _context.Tests
@@ -111,7 +118,7 @@ public class TestService : ITestService
         return await _context.Tests.AnyAsync(t => t.TestAppointmentID == appointmentId);
     }
 
-    public async Task<Test?> GetTestByTestIdAsync(int testId)
+    public async Task<Test?> GetTestWithDetailsByTestIdAsync(int testId)
     {
         return await _context.Tests.Include(t => t.TestAppointment)
         .ThenInclude(ta => ta.LocalDrivingLicenseApplication)
@@ -119,10 +126,6 @@ public class TestService : ITestService
         .ThenInclude(ba => ba.ApplicantPerson)
         .Include(t => t.TestAppointment)
         .ThenInclude(t => t.TestType)
-        .Include(t => t.TestAppointment)
-        .ThenInclude(ta => ta.LocalDrivingLicenseApplication)
-        .ThenInclude(la => la.BaseApplication)
-        .ThenInclude(ba => ba.ApplicationType)
         .SingleOrDefaultAsync(t => t.TestID == testId);
     }
 
