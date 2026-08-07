@@ -67,6 +67,7 @@ builder.Services.AddScoped<ITestService, TestService>();
 builder.Services.AddScoped<IDriverService, DriverService>();
 builder.Services.AddScoped<ILicenseService, LicenseService>();
 builder.Services.AddScoped<IDetainedLicenseService, DetainedLicenseService>();
+builder.Services.AddScoped<IInternationalLicenseService, InternationalLicenseService>();
 
 builder.Services.AddControllers();
 

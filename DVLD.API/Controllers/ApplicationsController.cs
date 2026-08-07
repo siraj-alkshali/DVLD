@@ -4,7 +4,10 @@ using DVLD.API.DTOs.Applications;
 using DVLD.API.DTOs.Common;
 using DVLD.API.DTOs.TestAppointments;
 using DVLD.API.Services.Interfaces;
+using DVLD.API.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using DVLD.API.DTOs.Licenses;
+using DVLD.API.DTOs;
 
 namespace DVLD.API.Controllers;
 
@@ -26,51 +29,86 @@ public class ApplicationsController : ControllerBase
         return Ok(await _applicationService.GetAllApplicationsAsync(parameters));
     }
 
-    [HttpPost("new-local-driving-license-application")]
-    // [ProducesResponseType(typeof(ApplicationDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<ApplicationDto>> CreateNewDrivingLicenseApplication(CreateLocalDrivingLicenseApplicationDto dto)
+    [HttpGet("{id}", Name = "GetApplicationById")]
+    [ProducesResponseType(typeof(ApplicationDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApplicationDto>> GetApplicationById(int applicationId)
     {
-        ServiceResult<ApplicationDto> result = await _applicationService.CreateNewDrivingLicenseApplicationAsync(dto);
+        ApplicationDto? application = await _applicationService.GetApplicationDtoByIdAsync(applicationId);
 
-        if (!result.IsSuccess)
-            switch (result.ResultType)
-            {
-                case FailureType.Unauthorized:
-                    return Unauthorized(result.Errors);
-                case FailureType.Conflict:
-                    return Conflict(result.Errors);
-                default:
-                    return StatusCode(500);
-            }
+        if (application == null)
+            return NotFound();
 
-        return Ok(result.Data);
+        return Ok(application);
     }
 
-
-
-    [HttpPost("retake-test-application")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<TestAppointmentDto>> CreateRetakeTestApplication(CreateRetakeTestApplicationDto dto)
+    [HttpPost("new-local-driving-license-application")]
+    [ProducesResponseType(typeof(ApplicationDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApplicationDto>> CreateNewDrivingLicenseApplication(CreateLocalDrivingLicenseApplicationDto createLocalDrivingLicenseApplicationDto)
     {
-        ServiceResult<TestAppointmentDto> result = await _applicationService.CreateNewRetakeTestApplication(dto);
+        ServiceResult<ApplicationDto> result = await _applicationService.CreateNewDrivingLicenseApplicationAsync(createLocalDrivingLicenseApplicationDto);
 
         if (!result.IsSuccess)
-            switch (result.ResultType)
-            {
-                case FailureType.Unauthorized:
-                    return Unauthorized(result.Errors);
-                case FailureType.Conflict:
-                    return Conflict(result.Errors);
-                default:
-                    return StatusCode(500);
-            }
+            return this.ToActionResult(result);
 
-        return Ok(result.Data);
+        return CreatedAtRoute("GetApplicationById", new { id = result.Data!.ApplicationID }, result.Data);
+    }
+
+    [HttpPost("retake-test-application")]
+    [ProducesResponseType(typeof(TestAppointmentDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TestAppointmentDto>> CreateRetakeTestApplication(CreateRetakeTestApplicationDto createRetakeTestApplicationDto)
+    {
+        ServiceResult<TestAppointmentDto> result = await _applicationService.CreateNewRetakeTestApplication(createRetakeTestApplicationDto);
+
+        if (!result.IsSuccess)
+            return this.ToActionResult(result);
+
+        return CreatedAtRoute("GetTestAppointmentById", new { id = result.Data!.TestAppointmentID }, result.Data);
+    }
+
+    [HttpPost("renew-license-application")]
+    [ProducesResponseType(typeof(LicenseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<LicenseDto>> RenewLicenseApplication(RenewLicenseDto renewLicenseDto)
+    {
+        ServiceResult<LicenseDto> result = await _applicationService.RenewDrivingLicenseAsync(renewLicenseDto);
+
+        if (!result.IsSuccess)
+            return this.ToActionResult(result);
+
+        return CreatedAtRoute("GetLicenseById", new { id = result.Data!.LicenseID }, result.Data);
+    }
+
+    [HttpPost("replace-license-application")]
+    [ProducesResponseType(typeof(LicenseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<LicenseDto>> ReplaceLicenseApplication(ReplaceLicenseDto replaceLicenseDto)
+    {
+        ServiceResult<LicenseDto> result = await _applicationService.ReplaceDrivingLicenseAsync(replaceLicenseDto);
+
+        if (!result.IsSuccess)
+            return this.ToActionResult(result);
+
+        return CreatedAtRoute("GetLicenseById", new { id = result.Data!.LicenseID }, result.Data);
+    }
+
+    [HttpPost("issue-international-license")]
+    [ProducesResponseType(typeof(InternationalLicenseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<LicenseDto>> IssueInternationalLicense(IssueInternationalLicenseDto issueInternationalLicenseDto)
+    {
+        ServiceResult<InternationalLicenseDto> result = await _applicationService.IssueInternationalLicenseAsync(issueInternationalLicenseDto);
+
+        if (!result.IsSuccess)
+            return this.ToActionResult(result);
+
+        return CreatedAtRoute("GetInternationalLicenseById", new { id = result.Data!.InternationalLicenseID }, result.Data);
     }
 
 }

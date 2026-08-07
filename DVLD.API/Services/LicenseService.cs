@@ -6,6 +6,7 @@ using DVLD.DataAccess.Data;
 using DVLD.DataAccess.Entities;
 using DVLD.API.Extensions;
 using Microsoft.EntityFrameworkCore;
+using DVLD.API.Mappings.Applications;
 
 namespace DVLD.API.Services;
 
@@ -24,7 +25,16 @@ public class LicenseService : ILicenseService
         _testService = testService;
     }
 
-    public async Task<ServiceResult<LicenseDto>> CreateNewLicenseAsync(CreateLicenseDto dto)
+    public async Task<LicenseDto?> GetLicenseDtoById(int licenseId)
+    {
+        return await _context.Licenses
+        .AsNoTracking()
+        .Where(l => l.LicenseID == licenseId)
+        .Select(l => l.ToDto())
+        .SingleOrDefaultAsync();
+    }
+
+    private async Task<ServiceResult<LocalDrivingLicenseApplication>> ValidateAndGetLocalDrivingApp(int localDrivingAppId)
     {
         LocalDrivingLicenseApplication? localDrivingApp = await _context.LocalDrivingLicenseApplications
         .Include(localApp => localApp.BaseApplication)
@@ -32,25 +42,51 @@ public class LicenseService : ILicenseService
         .Include(localApp => localApp.LicenseClass)
         .Include(localApp => localApp.BaseApplication)
         .ThenInclude(baseApp => baseApp.License)
-        .SingleOrDefaultAsync(localApp => localApp.LocalDrivingLicenseApplicationID == dto.LocalDrivingLicenseApplicationID);
+        .SingleOrDefaultAsync(localApp => localApp.LocalDrivingLicenseApplicationID == localDrivingAppId);
 
         if (localDrivingApp == null)
-            return ServiceResult<LicenseDto>.Failure(["This license application doesn't exist"], FailureType.Conflict);
+            return ServiceResult<LocalDrivingLicenseApplication>.Failure(["This license application doesn't exist"], FailureType.NotFound);
 
         if (localDrivingApp.BaseApplication.ApplicationStatusID != (int)enApplicationStatus.New)
-            return ServiceResult<LicenseDto>.Failure(["This license application is inactive"], FailureType.Conflict);
+            return ServiceResult<LocalDrivingLicenseApplication>.Failure(["This license application is inactive"], FailureType.Conflict);
 
         if (localDrivingApp.BaseApplication.License != null)
-            return ServiceResult<LicenseDto>.Failure(["This license application already has a license issued for it"], FailureType.Conflict);
+            return ServiceResult<LocalDrivingLicenseApplication>.Failure(["This license application already has a license issued for it"], FailureType.Conflict);
 
-        if (!await _testService.PassedAllRequiredTestsAsync(dto.LocalDrivingLicenseApplicationID))
-            return ServiceResult<LicenseDto>.Failure(["This person didn't pass all of the required tests in order to be eligible for this license"], FailureType.Conflict);
+        if (!await _testService.PassedAllRequiredTestsAsync(localDrivingAppId))
+            return ServiceResult<LocalDrivingLicenseApplication>.Failure(["This person didn't pass all of the required tests in order to be eligible for this license"], FailureType.Conflict);
 
-        int? createdByUserId = _currentUserService.UserID;
+        return ServiceResult<LocalDrivingLicenseApplication>.Success(localDrivingApp);
+    }
+
+    private License BuildLicenseEntity(LocalDrivingLicenseApplication localDrivingApp, Driver driver, CreateLicenseDto createLicenseDto)
+    {
         DateOnly today = DateOnly.FromDateTime(DateTime.Now);
 
-        if (createdByUserId is null)
-            throw new InvalidOperationException("Current user ID or username is not available.");
+        return new License
+        {
+            ApplicationID = localDrivingApp.ApplicationID,
+            DriverID = driver.DriverID,
+            LicenseClassID = localDrivingApp.LicenseClassID,
+            IssueDate = today,
+            ExpirationDate = today.AddYears(localDrivingApp.LicenseClass.DefaultValidityLength),
+            Notes = createLicenseDto.Notes,
+            PaidFees = localDrivingApp.LicenseClass.ClassFees,
+            IsActive = true,
+            IssueReasonID = (int)enLicenseIssueReason.FirstTimeIssue,
+            CreatedByUserID = _currentUserService.UserID
+        };
+    }
+
+    public async Task<ServiceResult<LicenseDto>> CreateNewLicenseAsync(CreateLicenseDto createLicenseDto)
+    {
+        ServiceResult<LocalDrivingLicenseApplication> localDrivingAppValidation = await ValidateAndGetLocalDrivingApp(createLicenseDto.LocalDrivingLicenseApplicationID);
+
+        if (!localDrivingAppValidation.IsSuccess)
+            return ServiceResult<LicenseDto>.Failure(localDrivingAppValidation.Errors, localDrivingAppValidation.ResultType!.Value);
+
+        LocalDrivingLicenseApplication localDrivingApp = localDrivingAppValidation.Data!;
+        DateOnly today = DateOnly.FromDateTime(DateTime.Now);
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -64,19 +100,7 @@ public class LicenseService : ILicenseService
                 await _context.SaveChangesAsync();
             }
 
-            License newLicense = new License
-            {
-                ApplicationID = localDrivingApp.ApplicationID,
-                DriverID = driver.DriverID,
-                LicenseClassID = localDrivingApp.LicenseClassID,
-                IssueDate = today,
-                ExpirationDate = today.AddYears(localDrivingApp.LicenseClass.DefaultValidityLength),
-                Notes = dto.Notes,
-                PaidFees = localDrivingApp.LicenseClass.ClassFees,
-                IsActive = true,
-                IssueReasonID = (int)enLicenseIssueReason.FirstTimeIssue,
-                CreatedByUserID = createdByUserId.Value
-            };
+            License newLicense = BuildLicenseEntity(localDrivingApp, driver, createLicenseDto);
 
             await _context.Licenses.AddAsync(newLicense);
             localDrivingApp.BaseApplication.ApplicationStatusID = (int)enApplicationStatus.Completed;
@@ -85,19 +109,23 @@ public class LicenseService : ILicenseService
 
             await transaction.CommitAsync();
 
-            LicenseDto resultDto = new LicenseDto(
+            Application baseApplication = localDrivingApp.BaseApplication;
+            Person person = baseApplication.ApplicantPerson;
+            LicenseClass licenseClass = localDrivingApp.LicenseClass;
+
+            LicenseDto newLicenseDto = new LicenseDto(
                 newLicense.LicenseID,
-                $"{localDrivingApp.BaseApplication.ApplicantPerson.FirstName} {localDrivingApp.BaseApplication.ApplicantPerson.LastName}",
-                localDrivingApp.BaseApplication.ApplicantPerson.NationalNo,
-                localDrivingApp.BaseApplication.ApplicantPerson.Phone,
-                localDrivingApp.LicenseClass.ClassName,
+                $"{person.FirstName} {person.LastName}",
+                person.NationalNo,
+                person.Phone,
+                licenseClass.ClassName,
                 ((enLicenseIssueReason)newLicense.IssueReasonID).GetDisplayName(),
                 newLicense.IssueDate,
                 newLicense.ExpirationDate,
                 newLicense.IsActive
             );
 
-            return ServiceResult<LicenseDto>.Success(resultDto);
+            return ServiceResult<LicenseDto>.Success(newLicenseDto);
         }
 
         catch

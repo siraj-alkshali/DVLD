@@ -27,68 +27,61 @@ public class TestAppointmentService : ITestAppointmentService
         _testService = testService;
     }
 
-    private async Task<ServiceResult<bool>> ValidateTestAppointmentAsync(int localDrivingAppId, int testTypeId)
+    public async Task<TestAppointmentDto?> GetTestAppointmentDtoByIdAsync(int testAppointmentId)
     {
+        return await _context.TestAppointments
+        .AsNoTracking()
+        .Where(ta => ta.TestAppointmentID == testAppointmentId)
+        .Select(ta => ta.ToDto())
+        .SingleOrDefaultAsync();
+    }
+
+    private async Task<ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>> ValidateTestAppointmentAsync(CreateTestAppointmentDto createTestAppointmentDto)
+    {
+        TestType? testType = await _testTypeService.GetTestTypeByIdAsync(createTestAppointmentDto.TestTypeID);
+
+        if (testType == null)
+            return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Failure(["This test type does not exist"], FailureType.NotFound);
+
+        int testTypeId = createTestAppointmentDto.TestTypeID;
         string testName = ((enTestType)testTypeId).GetDisplayName();
         string previousTestName = "";
 
         if (testTypeId != (int)enTestType.VisionTest)
             previousTestName = ((enTestType)testTypeId - 1).GetDisplayName();
 
-        LocalDrivingLicenseApplication? localDrivingApp = await _localDrivingLicenseApplicationService.GetLocalDrivingLicenseApplicationById(localDrivingAppId);
+        LocalDrivingLicenseApplication? localDrivingApp = await _localDrivingLicenseApplicationService.GetLocalDrivingLicenseApplicationById(createTestAppointmentDto.LocalDrivingLicenseApplicationID);
 
         if (localDrivingApp == null)
-            return ServiceResult<bool>.Failure(["This local driving license application doesn't exist"], FailureType.Conflict);
+            return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Failure(["This local driving license application doesn't exist"], FailureType.NotFound);
 
-        if (!_localDrivingLicenseApplicationService.IsActiveAsync(localDrivingApp))
-            return ServiceResult<bool>.Failure(["Cannot schedule a test appointment because the application is not active"], FailureType.Conflict);
+        if (!_localDrivingLicenseApplicationService.IsActive(localDrivingApp))
+            return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Failure(["Cannot schedule a test appointment because the application is not active"], FailureType.Conflict);
 
-        if (await _testService.PassedTestAsync(localDrivingAppId, testTypeId))
-            return ServiceResult<bool>.Failure([$"This applicant has already passed the {testName} for this application"], FailureType.Conflict);
+        if (await _testService.PassedTestAsync(createTestAppointmentDto.LocalDrivingLicenseApplicationID, testTypeId))
+            return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Failure([$"This applicant has already passed the {testName} for this application"], FailureType.Conflict);
 
-        if (!await _testService.IsEligibleForTestAsync(localDrivingAppId, testTypeId))
-            return ServiceResult<bool>.Failure([$"This applicant has to pass the {previousTestName} first before booking for the {testName}"], FailureType.Conflict);
+        if (!await _testService.IsEligibleForTestAsync(createTestAppointmentDto.LocalDrivingLicenseApplicationID, testTypeId))
+            return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Failure([$"This applicant has to pass the {previousTestName} first before booking for the {testName}"], FailureType.ValidationError);
 
-        if (await HasPendingAppointmentAsync(localDrivingAppId, testTypeId))
-            return ServiceResult<bool>.Failure([$"This applicant already has a pending appointment for the {testName}"], FailureType.Conflict);
+        if (await HasPendingAppointmentAsync(createTestAppointmentDto.LocalDrivingLicenseApplicationID, testTypeId))
+            return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Failure([$"This applicant already has a pending appointment for the {testName}"], FailureType.Conflict);
 
-        return ServiceResult<bool>.Success(true);
+        return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Success((localDrivingApp, testType));
     }
 
-    private async Task<ServiceResult<TestAppointment>> BuildTestAppointmentEntityAsync(int localDrivingAppId, int testTypeId, DateTime appointmentTime)
+    private TestAppointment BuildTestAppointmentEntityAsync(LocalDrivingLicenseApplication localDrivingApp, TestType testType, DateTime appointmentTime)
     {
-        TestType? testType = await _testTypeService.GetTestTypeByIdAsync(testTypeId);
-
-        if (testType == null)
-            return ServiceResult<TestAppointment>.Failure(["This test type does not exist"], FailureType.Conflict);
-
-        ServiceResult<bool> validationResult =
-            await ValidateTestAppointmentAsync(localDrivingAppId, testTypeId);
-
-        if (!validationResult.IsSuccess)
+        return new TestAppointment
         {
-            return ServiceResult<TestAppointment>.Failure(
-                validationResult.Errors,
-                validationResult.ResultType!.Value);
-        }
-
-        int? createdByUserID = _currentUserService.UserID;
-
-        if (createdByUserID == null)
-            return ServiceResult<TestAppointment>.Failure(["Unable to determine current user"], FailureType.Unauthorized);
-
-        TestAppointment testAppointment = new TestAppointment
-        {
-            TestTypeID = testTypeId,
-            LocalDrivingLicenseApplicationID = localDrivingAppId,
+            TestTypeID = testType.TestTypeID,
+            LocalDrivingLicenseApplicationID = localDrivingApp.LocalDrivingLicenseApplicationID,
             AppointmentTime = appointmentTime,
             PaidFees = testType.TestTypeFees,
-            CreatedByUserID = createdByUserID.Value,
+            CreatedByUserID = _currentUserService.UserID,
             IsLocked = false,
             RetakeTestApplicationID = null
         };
-
-        return ServiceResult<TestAppointment>.Success(testAppointment);
     }
 
     private async Task<bool> HasPendingAppointmentAsync(int localDrivingAppId, int testTypeId)
@@ -99,28 +92,34 @@ public class TestAppointmentService : ITestAppointmentService
         && !testApp.IsLocked);
     }
 
-    public async Task<ServiceResult<TestAppointmentDto>> CreateTestAppointmentAsync(CreateTestAppointmentDto dto)
+    public async Task<ServiceResult<TestAppointmentDto>> CreateTestAppointmentAsync(CreateTestAppointmentDto createTestAppointmentDto)
     {
-        ServiceResult<TestAppointment> testAppointmentEntityCreationResult = await BuildTestAppointmentEntityAsync(dto.LocalDrivingLicenseApplicationID, dto.TestTypeID, dto.AppointmentTime);
+        ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)> appointmentValidation = await ValidateTestAppointmentAsync(createTestAppointmentDto);
 
-        if (!testAppointmentEntityCreationResult.IsSuccess)
-            return ServiceResult<TestAppointmentDto>.Failure(testAppointmentEntityCreationResult.Errors, testAppointmentEntityCreationResult.ResultType!.Value);
+        if (!appointmentValidation.IsSuccess)
+            return ServiceResult<TestAppointmentDto>.Failure(appointmentValidation.Errors, appointmentValidation.ResultType!.Value);
 
-        TestAppointment testAppointment = testAppointmentEntityCreationResult.Data!;
-        await _context.TestAppointments.AddAsync(testAppointment);
+        LocalDrivingLicenseApplication localDrivingApp = appointmentValidation.Data.localDrivingApp;
+        TestType testType = appointmentValidation.Data.testType;
+
+        TestAppointment newTestAppointment = BuildTestAppointmentEntityAsync(localDrivingApp, testType, createTestAppointmentDto.AppointmentTime);
+
+        await _context.TestAppointments.AddAsync(newTestAppointment);
         await _context.SaveChangesAsync();
 
-        TestAppointment savedTestAppointment = await _context.TestAppointments
-        .AsNoTracking()
-        .Where(t => t.TestAppointmentID == testAppointment.TestAppointmentID)
-        .Include(t => t.LocalDrivingLicenseApplication)
-        .ThenInclude(localApp => localApp.BaseApplication)
-        .ThenInclude(baseApp => baseApp.ApplicantPerson)
-        .Include(t => t.CreatedByUser)
-        .Include(t => t.TestType)
-        .SingleAsync();
+        Application baseApplication = localDrivingApp.BaseApplication;
+        Person person = baseApplication.ApplicantPerson;
 
-        return ServiceResult<TestAppointmentDto>.Success(savedTestAppointment.ToDto());
+        TestAppointmentDto savedTestDto = new TestAppointmentDto(
+            newTestAppointment.TestAppointmentID,
+            testType.TestTypeTitle,
+            $"{person.FirstName} {person.LastName}",
+            person.NationalNo,
+            newTestAppointment.AppointmentTime,
+            _currentUserService.UserName!
+        );
+
+        return ServiceResult<TestAppointmentDto>.Success(savedTestDto);
     }
 
     public async Task<bool> RetakeTestAlreadyBooked(int localAppId, int testTypeId)

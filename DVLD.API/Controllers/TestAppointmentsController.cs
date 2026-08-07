@@ -1,5 +1,5 @@
 using DVLD.API.Common.Results;
-using DVLD.API.DTOs.Applications;
+using DVLD.API.Extensions;
 using DVLD.API.Services.Interfaces;
 using DVLD.API.DTOs.TestAppointments;
 using Microsoft.AspNetCore.Mvc;
@@ -17,27 +17,31 @@ public class TestAppointmentsController : ControllerBase
         _testAppointmentService = testAppointmentService;
     }
 
-    [HttpPost]
-    // [ProducesResponseType(typeof(ApplicationDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<TestAppointmentDto>> CreateNewTestAppointment(CreateTestAppointmentDto dto)
+    [HttpGet("{id}", Name = "GetTestAppointmentById")]
+    [ProducesResponseType(typeof(TestAppointmentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TestAppointmentDto>> GetTestAppointmentById(int testAppointmentId)
     {
-        ServiceResult<TestAppointmentDto> result = await _testAppointmentService.CreateTestAppointmentAsync(dto);
+        TestAppointmentDto? testAppointment = await _testAppointmentService.GetTestAppointmentDtoByIdAsync(testAppointmentId);
+
+        if (testAppointment == null)
+            return NotFound();
+
+        return Ok(testAppointment);
+    }
+
+    [HttpPost]
+    [ProducesResponseType(typeof(TestAppointmentDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TestAppointmentDto>> CreateNewTestAppointment(CreateTestAppointmentDto createTestAppointmentDto)
+    {
+        ServiceResult<TestAppointmentDto> result = await _testAppointmentService.CreateTestAppointmentAsync(createTestAppointmentDto);
 
         if (!result.IsSuccess)
-            switch (result.ResultType)
-            {
-                case FailureType.Unauthorized:
-                    return Unauthorized(result.Errors);
-                case FailureType.Conflict:
-                    return Conflict(result.Errors);
-                default:
-                    return StatusCode(500);
-            }
+            return this.ToActionResult(result);
 
-        return Ok(result.Data);
+        return CreatedAtRoute("GetTestAppointmentById", new { id = result.Data!.TestAppointmentID }, result.Data);
     }
 
 

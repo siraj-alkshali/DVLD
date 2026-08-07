@@ -12,19 +12,24 @@ public class CurrentUserService : ICurrentUserService
         _httpContextAccessor = httpContextAccessor;
     }
 
-    private ClaimsPrincipal? User =>
-        _httpContextAccessor.HttpContext?.User;
+    private ClaimsPrincipal User =>
+        _httpContextAccessor.HttpContext?.User
+        ?? throw new InvalidOperationException("HTTP context is unavailable.");
 
-    public int? UserID
+    public int UserID
     {
         get
         {
-            string? userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            return int.Parse(userId!);
+            if (!int.TryParse(userId, out int id))
+                throw new InvalidOperationException("Current user ID is unavailable.");
+
+            return id;
         }
     }
 
-    public string? UserName =>
-        User?.FindFirst(ClaimTypes.Name)?.Value;
+    public string UserName =>
+        User.FindFirstValue(ClaimTypes.Name)
+        ?? throw new InvalidOperationException("Current username is unavailable.");
 }

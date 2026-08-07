@@ -10,22 +10,21 @@ namespace DVLD.API.Services;
 public class LocalDrivingLicenseApplicationService : ILocalDrivingLicenseApplicationService
 {
     private readonly DVLDContext _context;
-    private readonly ILicenseClassService _licenseClassService;
 
-    public LocalDrivingLicenseApplicationService(DVLDContext context, ILicenseClassService licenseClassService)
+    public LocalDrivingLicenseApplicationService(DVLDContext context)
     {
         _context = context;
-        _licenseClassService = licenseClassService;
     }
 
     public async Task<LocalDrivingLicenseApplication?> GetLocalDrivingLicenseApplicationById(int localDrivingAppId)
     {
         return await _context.LocalDrivingLicenseApplications
         .Include(localApp => localApp.BaseApplication)
+        .ThenInclude(baseApp => baseApp.ApplicantPerson)
         .SingleOrDefaultAsync(localApp => localApp.LocalDrivingLicenseApplicationID == localDrivingAppId);
     }
 
-    public bool IsActiveAsync(LocalDrivingLicenseApplication localDrivingApp)
+    public bool IsActive(LocalDrivingLicenseApplication localDrivingApp)
     {
         return localDrivingApp.BaseApplication.ApplicationStatusID == (int)enApplicationStatus.New;
     }

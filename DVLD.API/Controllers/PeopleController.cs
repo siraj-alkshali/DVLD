@@ -29,9 +29,9 @@ public class PeopleController : ControllerBase
     [HttpGet("{id}", Name = "GetPersonById")]
     [ProducesResponseType(typeof(PersonDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PersonDto>> GetPersonById(int id)
+    public async Task<ActionResult<PersonDto>> GetPersonById(int personId)
     {
-        PersonDto? person = await _personService.GetPersonDtoByIdAsync(id);
+        PersonDto? person = await _personService.GetPersonDtoByIdAsync(personId);
 
         if (person == null)
             return NotFound();
@@ -63,9 +63,9 @@ public class PeopleController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> UpdatePerson(int id, UpdatePersonDto updatePersonDto)
+    public async Task<IActionResult> UpdatePerson(int personId, UpdatePersonDto updatePersonDto)
     {
-        ServiceResult<PersonDto> result = await _personService.UpdatePersonAsync(id, updatePersonDto);
+        ServiceResult<PersonDto> result = await _personService.UpdatePersonAsync(personId, updatePersonDto);
 
         if (!result.IsSuccess)
             return this.ToActionResult(result);
@@ -77,9 +77,9 @@ public class PeopleController : ControllerBase
     [ProducesResponseType(typeof(PersonDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<PersonDto>> UpdatePersonImage(int id, IFormFile image)
+    public async Task<ActionResult<PersonDto>> UpdatePersonImage(int personId, IFormFile image)
     {
-        ServiceResult<PersonDto> result = await _personService.UpdatePersonImageAsync(id, image);
+        ServiceResult<PersonDto> result = await _personService.UpdatePersonImageAsync(personId, image);
 
         if (!result.IsSuccess)
             return this.ToActionResult(result);
@@ -90,9 +90,9 @@ public class PeopleController : ControllerBase
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> DeletePerson(int id)
+    public async Task<IActionResult> DeletePerson(int personId)
     {
-        bool deleted = await _personService.DeletePersonAsync(id);
+        bool deleted = await _personService.DeletePersonAsync(personId);
 
         if (!deleted)
             return NotFound();

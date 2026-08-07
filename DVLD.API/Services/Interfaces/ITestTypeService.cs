@@ -6,6 +6,7 @@ namespace DVLD.API.Services.Interfaces;
 public interface ITestTypeService
 {
     Task<IEnumerable<TestTypeDto>> GetAllTestTypesAsync();
-    Task<TestTypeDto?> GetTestTypeDtoByIdAsync(int id);
-    Task<TestType?> GetTestTypeByIdAsync(int id);
+    Task<TestTypeDto?> GetTestTypeDtoByIdAsync(int testTypeId);
+    Task<TestType?> GetTestTypeByIdAsync(int testTypeId);
+    Task<bool> TestTypeExistsAsync(int testTypeId);
 }

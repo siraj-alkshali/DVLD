@@ -6,5 +6,5 @@ namespace DVLD.API.Services.Interfaces;
 public interface ILocalDrivingLicenseApplicationService
 {
     Task<LocalDrivingLicenseApplication?> GetLocalDrivingLicenseApplicationById(int id);
-    bool IsActiveAsync(LocalDrivingLicenseApplication localDrivingApp);
+    bool IsActive(LocalDrivingLicenseApplication localDrivingApp);
 }
