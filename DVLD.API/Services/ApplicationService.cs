@@ -12,7 +12,7 @@ using DVLD.API.DTOs.TestAppointments;
 using Microsoft.OpenApi.Extensions;
 using DVLD.API.DTOs.Licenses;
 using DVLD.API.DTOs;
-using DVLD.API.Mappings.Applications;
+using DVLD.API.DTOs.DetainedLicenses;
 
 namespace DVLD.API.Services;
 
@@ -82,7 +82,15 @@ public class ApplicationService : IApplicationService
         return await _context.Applications
         .AsNoTracking()
         .Where(app => app.ApplicationID == applicationId)
-        .Select(app => app.ToDto()).SingleOrDefaultAsync();
+        .Select(app => new ApplicationDto(
+            app.ApplicationID,
+            $"{app.ApplicantPerson.FirstName} {app.ApplicantPerson.LastName}",
+            app.ApplicantPerson.NationalNo,
+            app.ApplicationDate,
+            app.ApplicationType.ApplicationTypeTitle,
+            app.ApplicationStatus.StatusName,
+            app.CreatedByUser.UserName
+        )).SingleOrDefaultAsync();
     }
 
     private async Task<ServiceResult<Person>> ValidateReferenceDataForNewLicenseAsync(CreateLocalDrivingLicenseApplicationDto createLocalDrivingAppDto)
@@ -98,7 +106,7 @@ public class ApplicationService : IApplicationService
         return ServiceResult<Person>.Success(person);
     }
 
-    private Application BuildApplicationEntityAsync(int applicantPersonId, enApplicationType applicationType, enApplicationStatus applicationStatus, decimal appFees)
+    private Application BuildApplicationEntity(int applicantPersonId, enApplicationType applicationType, enApplicationStatus applicationStatus, decimal appFees)
     {
         DateOnly today = DateOnly.FromDateTime(DateTime.Now);
         return new Application
@@ -138,7 +146,7 @@ public class ApplicationService : IApplicationService
         Person person = referenceDataForNewLicenseValidation.Data!;
         decimal appFees = await _applicationTypeService.GetApplicationTypeFeesAsync(enApplicationType.NewLocalDrivingLicense);
 
-        Application newApplication = BuildApplicationEntityAsync(createLocalDrivingAppDto.ApplicantPersonID, enApplicationType.NewLocalDrivingLicense, enApplicationStatus.New, appFees);
+        Application newApplication = BuildApplicationEntity(createLocalDrivingAppDto.ApplicantPersonID, enApplicationType.NewLocalDrivingLicense, enApplicationStatus.New, appFees);
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -216,7 +224,7 @@ public class ApplicationService : IApplicationService
         int applicantPersonId = failedTest.TestAppointment.LocalDrivingLicenseApplication.BaseApplication.ApplicantPerson.PersonID;
         decimal appFees = await _applicationTypeService.GetApplicationTypeFeesAsync(enApplicationType.RetakeTest);
 
-        Application newRetakeApplication = BuildApplicationEntityAsync(applicantPersonId, enApplicationType.RetakeTest, enApplicationStatus.New, appFees);
+        Application newRetakeApplication = BuildApplicationEntity(applicantPersonId, enApplicationType.RetakeTest, enApplicationStatus.New, appFees);
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -271,7 +279,7 @@ public class ApplicationService : IApplicationService
         if (oldLicense.ExpirationDate > today.AddDays(30))
             return ServiceResult<License>.Failure(["License is not yet eligible for renewal"], FailureType.Conflict);
 
-        if (await _detainedLicenseService.IsLicenseDetainedAsync(licenseId))
+        if (oldLicense.Detentions.Any(d => d.ReleaseDate == null))
             return ServiceResult<License>.Failure(["A detained license cannot be renewed before it is released"], FailureType.Conflict);
 
         return ServiceResult<License>.Success(oldLicense);
@@ -311,7 +319,7 @@ public class ApplicationService : IApplicationService
         int applicantPersonId = oldLicense.Driver.PersonID;
         decimal appFees = await _applicationTypeService.GetApplicationTypeFeesAsync(enApplicationType.RenewDrivingLicense);
 
-        Application renewLicenseApplication = BuildApplicationEntityAsync(applicantPersonId, enApplicationType.RenewDrivingLicense, enApplicationStatus.Completed, appFees);
+        Application renewLicenseApplication = BuildApplicationEntity(applicantPersonId, enApplicationType.RenewDrivingLicense, enApplicationStatus.Completed, appFees);
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -356,7 +364,7 @@ public class ApplicationService : IApplicationService
         }
     }
 
-    private async Task<ServiceResult<License>> GeneralLicenseValidation(License license)
+    private ServiceResult<License> GeneralLicenseValidation(License license)
     {
         if (!license.IsActive)
             return ServiceResult<License>.Failure(["Cannot replace an inactive license"], FailureType.Conflict);
@@ -366,7 +374,7 @@ public class ApplicationService : IApplicationService
         if (license.ExpirationDate < today)
             return ServiceResult<License>.Failure(["Expired licenses must be renewed instead of replaced"], FailureType.Conflict);
 
-        if (await _detainedLicenseService.IsLicenseDetainedAsync(license.LicenseID))
+        if (license.Detentions.Any(d => d.ReleaseDate == null))
             return ServiceResult<License>.Failure(["A detained license cannot be replaced before it is released"], FailureType.Conflict);
 
         return ServiceResult<License>.Success(license);
@@ -375,7 +383,7 @@ public class ApplicationService : IApplicationService
     private async Task<ServiceResult<License>> ValidateLicenseForReplacement(ReplaceLicenseDto replaceLicenseDto)
     {
         if (replaceLicenseDto.ReplacementReason != ReplaceLicenseDto.enReplacementReason.ReplaceDamagedLicense
-        || replaceLicenseDto.ReplacementReason != ReplaceLicenseDto.enReplacementReason.ReplaceLostLicense)
+        && replaceLicenseDto.ReplacementReason != ReplaceLicenseDto.enReplacementReason.ReplaceLostLicense)
             return ServiceResult<License>.Failure(["Replacement reason is invalid"], FailureType.ValidationError);
 
         License? license = await _licenseService.GetLicenseWithDetailsByIdAsync(replaceLicenseDto.LicenseID);
@@ -383,7 +391,7 @@ public class ApplicationService : IApplicationService
         if (license == null)
             return ServiceResult<License>.Failure(["This license does not exist"], FailureType.NotFound);
 
-        return await GeneralLicenseValidation(license);
+        return GeneralLicenseValidation(license);
     }
 
     public async Task<ServiceResult<LicenseDto>> ReplaceDrivingLicenseAsync(ReplaceLicenseDto replaceLicenseDto)
@@ -398,7 +406,7 @@ public class ApplicationService : IApplicationService
         enApplicationType applicationType = replaceLicenseDto.ReplacementReason == ReplaceLicenseDto.enReplacementReason.ReplaceLostLicense ? enApplicationType.ReplacementForLostDrivingLicense : enApplicationType.ReplacementForDamagedDrivingLicense;
         decimal appFees = await _applicationTypeService.GetApplicationTypeFeesAsync(applicationType);
 
-        Application replaceLicenseApplication = BuildApplicationEntityAsync(applicantPersonId, applicationType, enApplicationStatus.Completed, appFees);
+        Application replaceLicenseApplication = BuildApplicationEntity(applicantPersonId, applicationType, enApplicationStatus.Completed, appFees);
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -452,7 +460,7 @@ public class ApplicationService : IApplicationService
         if (await _internationalLicenseService.ActiveInternationalLicenseExistsAsync(license.DriverID))
             return ServiceResult<License>.Failure(["This driver already has an active international license"], FailureType.Conflict);
 
-        return await GeneralLicenseValidation(license);
+        return GeneralLicenseValidation(license);
     }
 
     private InternationalLicense BuildInternationalLicenseEntity(Application intlLicenseApplication, License license, IssueInternationalLicenseDto issueInternationalLicenseDto)
@@ -482,7 +490,7 @@ public class ApplicationService : IApplicationService
         int applicantPersonId = license.Driver.PersonID;
         decimal appFees = await _applicationTypeService.GetApplicationTypeFeesAsync(enApplicationType.NewInternationalLicense);
 
-        Application internationalLicenseApplication = BuildApplicationEntityAsync(applicantPersonId, enApplicationType.NewInternationalLicense, enApplicationStatus.Completed, appFees);
+        Application internationalLicenseApplication = BuildApplicationEntity(applicantPersonId, enApplicationType.NewInternationalLicense, enApplicationStatus.Completed, appFees);
 
         await using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -523,4 +531,74 @@ public class ApplicationService : IApplicationService
         }
     }
 
+    private async Task<ServiceResult<(License license, DetainedLicense detainInfo)>> ValidateAndGetLicenseForRelease(int licenseId)
+    {
+        License? license = await _licenseService.GetLicenseByIdForDetentionAsync(licenseId);
+
+        if (license == null)
+            return ServiceResult<(License license, DetainedLicense detainInfo)>.Failure(["This license does not exist"], FailureType.NotFound);
+
+        if (license.IsActive)
+            return ServiceResult<(License license, DetainedLicense detainInfo)>.Failure(["This license is active"], FailureType.Conflict);
+
+        DetainedLicense? detainInfo = license.Detentions.SingleOrDefault(d => d.ReleaseDate == null);
+
+        if (detainInfo == null)
+            return ServiceResult<(License license, DetainedLicense detainInfo)>.Failure(["This license is not currently detained"], FailureType.Conflict);
+
+        return ServiceResult<(License license, DetainedLicense detainInfo)>.Success((license, detainInfo));
+    }
+
+    public async Task<ServiceResult<DetainedLicenseDto>> ReleaseDetainedLicense(ReleaseDetainedLicenseDto releaseDetainedLicenseDto)
+    {
+        ServiceResult<(License license, DetainedLicense detainInfo)> licenseValidationBeforeRelease = await ValidateAndGetLicenseForRelease(releaseDetainedLicenseDto.LicenseID);
+
+        if (!licenseValidationBeforeRelease.IsSuccess)
+            return ServiceResult<DetainedLicenseDto>.Failure(licenseValidationBeforeRelease.Errors, licenseValidationBeforeRelease.ResultType!.Value);
+
+        License license = licenseValidationBeforeRelease.Data.license;
+        DetainedLicense detainInfo = licenseValidationBeforeRelease.Data.detainInfo;
+        Driver driver = license.Driver;
+        Person person = driver.Person;
+        decimal appFees = await _applicationTypeService.GetApplicationTypeFeesAsync(enApplicationType.ReleaseDetainedDrivingLicense);
+
+        Application releaseDetainedLicenseApplication = BuildApplicationEntity(person.PersonID, enApplicationType.ReleaseDetainedDrivingLicense, enApplicationStatus.Completed, appFees);
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            await _context.Applications.AddAsync(releaseDetainedLicenseApplication);
+            await _context.SaveChangesAsync();
+
+            license.IsActive = true;
+            detainInfo.ReleaseDate = DateOnly.FromDateTime(DateTime.Now);
+            detainInfo.ReleasedByUserID = _currentUserService.UserID;
+            detainInfo.ReleaseApplicationID = releaseDetainedLicenseApplication.ApplicationID;
+
+            await _context.SaveChangesAsync();
+
+            DetainedLicenseDto newDetainInfoDto = new DetainedLicenseDto(
+                detainInfo.DetainID,
+                $"{person.FirstName} {person.LastName}",
+                person.NationalNo,
+                person.Phone,
+                detainInfo.FineFees,
+                detainInfo.DetainDate,
+                detainInfo.ReleaseDate,
+                _currentUserService.UserName
+            );
+
+            await transaction.CommitAsync();
+
+            return ServiceResult<DetainedLicenseDto>.Success(newDetainInfoDto);
+        }
+
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
 }
+

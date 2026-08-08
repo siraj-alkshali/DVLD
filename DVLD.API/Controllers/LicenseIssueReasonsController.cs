@@ -22,12 +22,12 @@ public class LicenseIssueReasonsController : ControllerBase
         return Ok(await _licenseIssueReasonService.GetAllLicenseIssueReasonsAsync());
     }
 
-    [HttpGet("{id}", Name = "GetLicenseIssueReasonById")]
+    [HttpGet("{licenseIssueReasonId}", Name = "GetLicenseIssueReasonById")]
     [ProducesResponseType(typeof(LicenseIssueReasonDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<LicenseIssueReasonDto>> GetLicenseIssueReasonById(int id)
+    public async Task<ActionResult<LicenseIssueReasonDto>> GetLicenseIssueReasonById(int licenseIssueReasonId)
     {
-        LicenseIssueReasonDto? licenseIssueReason = await _licenseIssueReasonService.GetLicenseIssueReasonById(id);
+        LicenseIssueReasonDto? licenseIssueReason = await _licenseIssueReasonService.GetLicenseIssueReasonById(licenseIssueReasonId);
 
         if (licenseIssueReason == null)
             return NotFound();

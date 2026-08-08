@@ -55,10 +55,7 @@ public class AuthController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<UserDto>> GetCurrentUser()
     {
-        if (_currentUserService.UserID == null)
-            return Unauthorized();
-
-        UserDto? user = await _authService.GetUserDtoByUserIdAsync(_currentUserService.UserID.Value);
+        UserDto? user = await _authService.GetUserDtoByUserIdAsync(_currentUserService.UserID);
 
         if (user == null)
             return Unauthorized();

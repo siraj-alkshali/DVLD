@@ -20,7 +20,16 @@ public class InternationalLicenseService : IInternationalLicenseService
         return await _context.InternationalLicenses
         .AsNoTracking()
         .Where(intl => intl.InternationalLicenseID == internationalLicenseId)
-        .Select(intl => intl.ToDto())
+        .Select(intl => new InternationalLicenseDto(
+            intl.InternationalLicenseID,
+            $"{intl.Driver.Person.FirstName} {intl.Driver.Person.LastName}",
+            intl.Driver.Person.NationalNo,
+            intl.Driver.Person.Phone,
+            intl.IssuedUsingLocalLicense.LicenseClass.ClassName,
+            intl.IssueDate,
+            intl.ExpirationDate,
+            intl.IsActive
+        ))
         .SingleOrDefaultAsync();
     }
 

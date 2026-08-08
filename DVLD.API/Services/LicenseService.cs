@@ -30,7 +30,17 @@ public class LicenseService : ILicenseService
         return await _context.Licenses
         .AsNoTracking()
         .Where(l => l.LicenseID == licenseId)
-        .Select(l => l.ToDto())
+        .Select(l => new LicenseDto(
+            l.LicenseID,
+            $"{l.Driver.Person.FirstName} {l.Driver.Person.LastName}",
+            l.Driver.Person.NationalNo,
+            l.Driver.Person.Phone,
+            l.LicenseClass.ClassName,
+            l.LicenseIssueReason.IssueReasonName,
+            l.IssueDate,
+            l.ExpirationDate,
+            l.IsActive
+        ))
         .SingleOrDefaultAsync();
     }
 
@@ -141,6 +151,16 @@ public class LicenseService : ILicenseService
         .Include(l => l.Driver)
         .ThenInclude(d => d.Person)
         .Include(l => l.LicenseClass)
+        .Include(l => l.Detentions)
+        .SingleOrDefaultAsync(l => l.LicenseID == licenseId);
+    }
+
+    public async Task<License?> GetLicenseByIdForDetentionAsync(int licenseId)
+    {
+        return await _context.Licenses
+        .Include(l => l.Driver)
+        .ThenInclude(d => d.Person)
+        .Include(l => l.Detentions)
         .SingleOrDefaultAsync(l => l.LicenseID == licenseId);
     }
 }

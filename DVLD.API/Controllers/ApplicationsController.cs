@@ -8,6 +8,7 @@ using DVLD.API.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using DVLD.API.DTOs.Licenses;
 using DVLD.API.DTOs;
+using DVLD.API.DTOs.DetainedLicenses;
 
 namespace DVLD.API.Controllers;
 
@@ -29,7 +30,7 @@ public class ApplicationsController : ControllerBase
         return Ok(await _applicationService.GetAllApplicationsAsync(parameters));
     }
 
-    [HttpGet("{id}", Name = "GetApplicationById")]
+    [HttpGet("{applicationId}", Name = "GetApplicationById")]
     [ProducesResponseType(typeof(ApplicationDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApplicationDto>> GetApplicationById(int applicationId)
@@ -52,7 +53,7 @@ public class ApplicationsController : ControllerBase
         if (!result.IsSuccess)
             return this.ToActionResult(result);
 
-        return CreatedAtRoute("GetApplicationById", new { id = result.Data!.ApplicationID }, result.Data);
+        return CreatedAtRoute("GetApplicationById", new { applicationId = result.Data!.ApplicationID }, result.Data);
     }
 
     [HttpPost("retake-test-application")]
@@ -66,7 +67,7 @@ public class ApplicationsController : ControllerBase
         if (!result.IsSuccess)
             return this.ToActionResult(result);
 
-        return CreatedAtRoute("GetTestAppointmentById", new { id = result.Data!.TestAppointmentID }, result.Data);
+        return CreatedAtRoute("GetTestAppointmentById", new { testAppointmentId = result.Data!.TestAppointmentID }, result.Data);
     }
 
     [HttpPost("renew-license-application")]
@@ -80,7 +81,7 @@ public class ApplicationsController : ControllerBase
         if (!result.IsSuccess)
             return this.ToActionResult(result);
 
-        return CreatedAtRoute("GetLicenseById", new { id = result.Data!.LicenseID }, result.Data);
+        return CreatedAtRoute("GetLicenseById", new { licenseId = result.Data!.LicenseID }, result.Data);
     }
 
     [HttpPost("replace-license-application")]
@@ -94,7 +95,7 @@ public class ApplicationsController : ControllerBase
         if (!result.IsSuccess)
             return this.ToActionResult(result);
 
-        return CreatedAtRoute("GetLicenseById", new { id = result.Data!.LicenseID }, result.Data);
+        return CreatedAtRoute("GetLicenseById", new { licenseId = result.Data!.LicenseID }, result.Data);
     }
 
     [HttpPost("issue-international-license")]
@@ -108,7 +109,21 @@ public class ApplicationsController : ControllerBase
         if (!result.IsSuccess)
             return this.ToActionResult(result);
 
-        return CreatedAtRoute("GetInternationalLicenseById", new { id = result.Data!.InternationalLicenseID }, result.Data);
+        return CreatedAtRoute("GetInternationalLicenseById", new { internationalLicenseId = result.Data!.InternationalLicenseID }, result.Data);
+    }
+
+    [HttpPost("release-detained-license")]
+    [ProducesResponseType(typeof(DetainedLicenseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<DetainedLicenseDto>> ReleaseDetainedLicense(ReleaseDetainedLicenseDto releaseDetainedLicenseDto)
+    {
+        ServiceResult<DetainedLicenseDto> result = await _applicationService.ReleaseDetainedLicense(releaseDetainedLicenseDto);
+
+        if (!result.IsSuccess)
+            return this.ToActionResult(result);
+
+        return Ok(result.Data);
     }
 
 }

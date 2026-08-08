@@ -1,18 +1,15 @@
 using DVLD.API.Common.Constants;
 using DVLD.API.Common.Results;
-using DVLD.API.Extensions;
 using DVLD.API.DTOs.Tests;
 using DVLD.API.Services.Interfaces;
 using DVLD.DataAccess.Data;
 using DVLD.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
-using DVLD.API.Mappings.Tests;
 
 namespace DVLD.API.Services;
 
 public class TestService : ITestService
 {
-
     private readonly DVLDContext _context;
     private readonly ILocalDrivingLicenseApplicationService _localDrivingLicenseApplicationService;
     private readonly ICurrentUserService _currentUserService;
@@ -31,6 +28,7 @@ public class TestService : ITestService
         .ThenInclude(localApp => localApp.BaseApplication)
         .ThenInclude(baseApp => baseApp.ApplicantPerson)
         .Include(t => t.TestType)
+        .Include(t => t.RetakeApplication)
         .SingleOrDefaultAsync(testApp => testApp.TestAppointmentID == createTestDto.TestAppointmentID);
 
         if (testApp == null)
@@ -80,10 +78,10 @@ public class TestService : ITestService
         await _context.Tests.AddAsync(test);
         testApp.IsLocked = true;
 
-        if (testApp.RetakeTestApplicationID != null)
+        if (testApp.RetakeApplication != null)
         {
-            baseApplication.ApplicationStatusID = (int)enApplicationStatus.Completed;
-            baseApplication.LastStatusDate = DateOnly.FromDateTime(DateTime.Now);
+            testApp.RetakeApplication.ApplicationStatusID = (int)enApplicationStatus.Completed;
+            testApp.RetakeApplication.LastStatusDate = DateOnly.FromDateTime(DateTime.Now);
         }
 
         await _context.SaveChangesAsync();
@@ -123,6 +121,14 @@ public class TestService : ITestService
         && t.Passed);
     }
 
+    public async Task<bool> HasAlreadyTakenTestAsync(int localDrivingAppId, int testTypeId)
+    {
+        return await _context.Tests
+        .AnyAsync(t => t.TestAppointment.LocalDrivingLicenseApplicationID == localDrivingAppId
+        && t.TestAppointment.TestTypeID == testTypeId
+        && !t.Passed);
+    }
+
     private async Task<bool> TestExistsAsync(int appointmentId)
     {
         return await _context.Tests.AnyAsync(t => t.TestAppointmentID == appointmentId);
@@ -137,6 +143,13 @@ public class TestService : ITestService
         .Include(t => t.TestAppointment)
         .ThenInclude(t => t.TestType)
         .SingleOrDefaultAsync(t => t.TestID == testId);
+    }
+
+    public async Task<Test?> GetTestForTestAppointmentAsync(int localDrivingAppId, int testTypeId)
+    {
+        return await _context.Tests
+        .SingleOrDefaultAsync(t => t.TestAppointment.LocalDrivingLicenseApplicationID == localDrivingAppId
+        && t.TestAppointment.TestTypeID == testTypeId);
     }
 
     public async Task<bool> PassedAllRequiredTestsAsync(int localDrivingAppId)

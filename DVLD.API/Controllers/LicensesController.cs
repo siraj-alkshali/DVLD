@@ -17,7 +17,7 @@ public class LicensesController : ControllerBase
         _licenseService = licenseService;
     }
 
-    [HttpGet("{id}", Name = "GetLicenseById")]
+    [HttpGet("{licenseId}", Name = "GetLicenseById")]
     [ProducesResponseType(typeof(LicenseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<LicenseDto>> GetLicenseById(int licenseId)
@@ -41,6 +41,6 @@ public class LicensesController : ControllerBase
         if (!result.IsSuccess)
             return this.ToActionResult(result);
 
-        return CreatedAtRoute("GetLicenseById", new { id = result.Data!.LicenseID }, result.Data);
+        return CreatedAtRoute("GetLicenseById", new { licenseId = result.Data!.LicenseID }, result.Data);
     }
 }

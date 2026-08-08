@@ -17,7 +17,7 @@ public class TestAppointmentsController : ControllerBase
         _testAppointmentService = testAppointmentService;
     }
 
-    [HttpGet("{id}", Name = "GetTestAppointmentById")]
+    [HttpGet("{testAppointmentId}", Name = "GetTestAppointmentById")]
     [ProducesResponseType(typeof(TestAppointmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TestAppointmentDto>> GetTestAppointmentById(int testAppointmentId)
@@ -41,7 +41,7 @@ public class TestAppointmentsController : ControllerBase
         if (!result.IsSuccess)
             return this.ToActionResult(result);
 
-        return CreatedAtRoute("GetTestAppointmentById", new { id = result.Data!.TestAppointmentID }, result.Data);
+        return CreatedAtRoute("GetTestAppointmentById", new { testAppointmentId = result.Data!.TestAppointmentID }, result.Data);
     }
 
 

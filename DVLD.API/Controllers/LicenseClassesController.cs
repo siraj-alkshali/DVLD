@@ -24,12 +24,12 @@ public class LicenseClassesController : ControllerBase
         return Ok(await _licenseClassService.GetAllLicenseClassesAsync());
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{licenseClassId}")]
     [ProducesResponseType(typeof(LicenseClassDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<LicenseClassDto>> GetLicenseClassById(int id)
+    public async Task<ActionResult<LicenseClassDto>> GetLicenseClassById(int licenseClassId)
     {
-        LicenseClassDto? licenseClass = await _licenseClassService.GetLicenseClassDtoByIdAsync(id);
+        LicenseClassDto? licenseClass = await _licenseClassService.GetLicenseClassDtoByIdAsync(licenseClassId);
 
         if (licenseClass == null)
             return NotFound();

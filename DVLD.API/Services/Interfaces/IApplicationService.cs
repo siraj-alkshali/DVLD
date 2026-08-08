@@ -3,6 +3,7 @@ using DVLD.API.Common.Results;
 using DVLD.API.DTOs;
 using DVLD.API.DTOs.Applications;
 using DVLD.API.DTOs.Common;
+using DVLD.API.DTOs.DetainedLicenses;
 using DVLD.API.DTOs.Licenses;
 using DVLD.API.DTOs.TestAppointments;
 
@@ -17,4 +18,5 @@ public interface IApplicationService
     Task<ServiceResult<LicenseDto>> RenewDrivingLicenseAsync(RenewLicenseDto renewLicenseDto);
     Task<ServiceResult<LicenseDto>> ReplaceDrivingLicenseAsync(ReplaceLicenseDto replaceLicenseDto);
     Task<ServiceResult<InternationalLicenseDto>> IssueInternationalLicenseAsync(IssueInternationalLicenseDto internationalLicenseDto);
+    Task<ServiceResult<DetainedLicenseDto>> ReleaseDetainedLicense(ReleaseDetainedLicenseDto releaseDetainedLicenseDto);
 }

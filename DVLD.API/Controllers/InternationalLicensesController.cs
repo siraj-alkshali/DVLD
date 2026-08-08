@@ -15,7 +15,7 @@ public class InternationalLicensesController : ControllerBase
         _internationalLicenseService = internationalLicenseService;
     }
 
-    [HttpGet("{id}", Name = "GetInternationalLicenseById")]
+    [HttpGet("{internationalLicenseId}", Name = "GetInternationalLicenseById")]
     [ProducesResponseType(typeof(InternationalLicenseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<InternationalLicenseDto>> GetInternationalLicenseById(int internationalLicenseId)

@@ -5,7 +5,6 @@ using DVLD.API.Services.Interfaces;
 using DVLD.DataAccess.Data;
 using DVLD.DataAccess.Entities;
 using DVLD.API.Extensions;
-using DVLD.API.Mappings.TestAppointments;
 using Microsoft.EntityFrameworkCore;
 
 namespace DVLD.API.Services;
@@ -32,7 +31,14 @@ public class TestAppointmentService : ITestAppointmentService
         return await _context.TestAppointments
         .AsNoTracking()
         .Where(ta => ta.TestAppointmentID == testAppointmentId)
-        .Select(ta => ta.ToDto())
+        .Select(ta => new TestAppointmentDto(
+            ta.TestAppointmentID,
+            ta.TestType.TestTypeTitle,
+            $"{ta.LocalDrivingLicenseApplication.BaseApplication.ApplicantPerson.FirstName} {ta.LocalDrivingLicenseApplication.BaseApplication.ApplicantPerson.LastName}",
+            ta.LocalDrivingLicenseApplication.BaseApplication.ApplicantPerson.NationalNo,
+            ta.AppointmentTime,
+            ta.CreatedByUser.UserName
+        ))
         .SingleOrDefaultAsync();
     }
 
@@ -58,8 +64,15 @@ public class TestAppointmentService : ITestAppointmentService
         if (!_localDrivingLicenseApplicationService.IsActive(localDrivingApp))
             return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Failure(["Cannot schedule a test appointment because the application is not active"], FailureType.Conflict);
 
-        if (await _testService.PassedTestAsync(createTestAppointmentDto.LocalDrivingLicenseApplicationID, testTypeId))
-            return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Failure([$"This applicant has already passed the {testName} for this application"], FailureType.Conflict);
+        Test? previousTest = await _testService.GetTestForTestAppointmentAsync(createTestAppointmentDto.LocalDrivingLicenseApplicationID, createTestAppointmentDto.TestTypeID);
+
+        if (previousTest != null)
+        {
+            if (previousTest.Passed)
+                return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Failure([$"This applicant has already passed the {testName} for this application"], FailureType.Conflict);
+
+            return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Failure(["This test has already been taken. Apply for a retake instead"], FailureType.Conflict);
+        }
 
         if (!await _testService.IsEligibleForTestAsync(createTestAppointmentDto.LocalDrivingLicenseApplicationID, testTypeId))
             return ServiceResult<(LocalDrivingLicenseApplication localDrivingApp, TestType testType)>.Failure([$"This applicant has to pass the {previousTestName} first before booking for the {testName}"], FailureType.ValidationError);
