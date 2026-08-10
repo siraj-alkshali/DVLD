@@ -69,14 +69,14 @@ public class UserService : IUserService
         return ServiceResult<Person>.Success(person);
     }
 
-    private async Task<ServiceResult<User>> ValidateAndGetUserForUserNameChangeAsync(int userId, ChangeUserNameDto changeUserNameDto)
+    private async Task<ServiceResult<User>> ValidateAndGetUserForUserNameChangeAsync(int userId, string normalizedUserName)
     {
         User? user = await GetUserByIdWithDetailsAsync(userId);
 
         if (user == null)
             return ServiceResult<User>.Failure(["This user does not exist"], FailureType.NotFound);
 
-        if (await UserNameExistsForAnotherUserAsync(changeUserNameDto.UserName, userId))
+        if (await UserNameExistsForAnotherUserAsync(normalizedUserName, userId))
             return ServiceResult<User>.Failure(["This username has been already taken by another user"], FailureType.Conflict);
 
         return ServiceResult<User>.Success(user);
@@ -124,7 +124,7 @@ public class UserService : IUserService
     {
         string normalizedUserName = StringUtilities.NormalizeUserName(changeUserNameDto.UserName);
 
-        ServiceResult<User> changeUserNameValidation = await ValidateAndGetUserForUserNameChangeAsync(userId, changeUserNameDto);
+        ServiceResult<User> changeUserNameValidation = await ValidateAndGetUserForUserNameChangeAsync(userId, normalizedUserName);
 
         if (!changeUserNameValidation.IsSuccess)
             return ServiceResult<UserDto>.Failure(changeUserNameValidation.Errors, changeUserNameValidation.ResultType!.Value);

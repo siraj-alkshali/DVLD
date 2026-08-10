@@ -194,21 +194,32 @@ public class PersonService : IPersonService
         if (person == null)
             return ServiceResult<PersonDto>.Failure(["The requested person was not found"], FailureType.NotFound);
 
+        string? oldImage = person.ImagePath;
+
         ServiceResult<string> imageUploadResult = await _imageService.UploadImageAsync(image);
 
         if (!imageUploadResult.IsSuccess)
             return ServiceResult<PersonDto>.Failure(imageUploadResult.Errors, FailureType.ValidationError);
 
-        string? oldImage = person.ImagePath;
+        string newImage = imageUploadResult.Data!;
 
-        person.ImagePath = imageUploadResult.Data;
+        person.ImagePath = newImage;
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch
+        {
+            await _imageService.DeleteImage(newImage);
+            throw;
+        }
 
         if (!string.IsNullOrWhiteSpace(oldImage))
             await _imageService.DeleteImage(oldImage);
 
-        return ServiceResult<PersonDto>.Success(person.ToDto(_imageService.GetImageUrl(person.ImagePath)));
+        return ServiceResult<PersonDto>.Success(
+            person.ToDto(_imageService.GetImageUrl(person.ImagePath)));
     }
 
     public async Task<bool> DeletePersonAsync(int personId)

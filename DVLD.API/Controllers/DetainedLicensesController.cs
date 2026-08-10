@@ -41,6 +41,7 @@ public class DetainedLicensesController : ControllerBase
 
     [HttpPost]
     [ProducesResponseType(typeof(DetainedLicenseDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<DetainedLicenseDto>> DetainLicense(DetainLicenseDto detainLicenseDto)

@@ -8,7 +8,7 @@ namespace DVLD.API.Services.Interfaces;
 
 public interface ILicenseService
 {
-    Task<LicenseDto?> GetLicenseDtoById(int licenseId);
+    Task<LicenseDto?> GetLicenseDtoByIdAsync(int licenseId);
     Task<ServiceResult<LicenseDto>> CreateNewLicenseAsync(CreateLicenseDto localDrivingAppId);
     Task<License?> GetLicenseWithDetailsByIdAsync(int licenseId);
     Task<License?> GetLicenseByIdForDetentionAsync(int licenseId);

@@ -17,7 +17,7 @@ public class TestsController : ControllerBase
         _testService = testService;
     }
 
-    [HttpGet("{testId}")]
+    [HttpGet("{testId}", Name = "GetTestById")]
     [ProducesResponseType(typeof(TestDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TestDto>> GetTestById(int testId)

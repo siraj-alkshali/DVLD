@@ -136,7 +136,7 @@ public class ApplicationService : IApplicationService
         );
     }
 
-    public async Task<ServiceResult<ApplicationDto>> CreateNewDrivingLicenseApplicationAsync(CreateLocalDrivingLicenseApplicationDto createLocalDrivingAppDto)
+    public async Task<ServiceResult<ApplicationDto>> CreateLocalDrivingLicenseApplicationAsync(CreateLocalDrivingLicenseApplicationDto createLocalDrivingAppDto)
     {
         ServiceResult<Person> referenceDataForNewLicenseValidation = await ValidateReferenceDataForNewLicenseAsync(createLocalDrivingAppDto);
 
@@ -213,7 +213,7 @@ public class ApplicationService : IApplicationService
         };
     }
 
-    public async Task<ServiceResult<TestAppointmentDto>> CreateNewRetakeTestApplicationAsync(CreateRetakeTestApplicationDto createRetakeTestApplicationDto)
+    public async Task<ServiceResult<TestAppointmentDto>> CreateRetakeTestApplicationAsync(CreateRetakeTestApplicationDto createRetakeTestApplicationDto)
     {
         ServiceResult<Test> validationForNewTest = await ValidateForTestEligibility(createRetakeTestApplicationDto.TestID);
 

@@ -34,7 +34,7 @@ public class TestAppointmentsController : ControllerBase
     [ProducesResponseType(typeof(TestAppointmentDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<TestAppointmentDto>> CreateNewTestAppointment(CreateTestAppointmentDto createTestAppointmentDto)
+    public async Task<ActionResult<TestAppointmentDto>> CreateTestAppointment(CreateTestAppointmentDto createTestAppointmentDto)
     {
         ServiceResult<TestAppointmentDto> result = await _testAppointmentService.CreateTestAppointmentAsync(createTestAppointmentDto);
 

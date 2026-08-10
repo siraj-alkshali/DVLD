@@ -19,7 +19,7 @@ public class InternationalLicensesController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(PagedResultDto<InternationalLicenseDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<PagedResultDto<InternationalLicenseDto>>> GetAllInternationalLicenses(InternationalLicensesQueryParameters parameters)
+    public async Task<ActionResult<PagedResultDto<InternationalLicenseDto>>> GetAllInternationalLicenses([FromQuery] InternationalLicensesQueryParameters parameters)
     {
         return Ok(await _internationalLicenseService.GetAllInternationalLicensesAsync(parameters));
     }

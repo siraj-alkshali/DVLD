@@ -46,9 +46,9 @@ public class ApplicationsController : ControllerBase
     [HttpPost("new-local-driving-license-application")]
     [ProducesResponseType(typeof(ApplicationDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApplicationDto>> CreateNewDrivingLicenseApplication(CreateLocalDrivingLicenseApplicationDto createLocalDrivingLicenseApplicationDto)
+    public async Task<ActionResult<ApplicationDto>> CreateLocalDrivingLicenseApplication(CreateLocalDrivingLicenseApplicationDto createLocalDrivingLicenseApplicationDto)
     {
-        ServiceResult<ApplicationDto> result = await _applicationService.CreateNewDrivingLicenseApplicationAsync(createLocalDrivingLicenseApplicationDto);
+        ServiceResult<ApplicationDto> result = await _applicationService.CreateLocalDrivingLicenseApplicationAsync(createLocalDrivingLicenseApplicationDto);
 
         if (!result.IsSuccess)
             return this.ToActionResult(result);
@@ -62,7 +62,7 @@ public class ApplicationsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TestAppointmentDto>> CreateRetakeTestApplication(CreateRetakeTestApplicationDto createRetakeTestApplicationDto)
     {
-        ServiceResult<TestAppointmentDto> result = await _applicationService.CreateNewRetakeTestApplicationAsync(createRetakeTestApplicationDto);
+        ServiceResult<TestAppointmentDto> result = await _applicationService.CreateRetakeTestApplicationAsync(createRetakeTestApplicationDto);
 
         if (!result.IsSuccess)
             return this.ToActionResult(result);
@@ -102,7 +102,7 @@ public class ApplicationsController : ControllerBase
     [ProducesResponseType(typeof(InternationalLicenseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<LicenseDto>> IssueInternationalLicense(IssueInternationalLicenseDto issueInternationalLicenseDto)
+    public async Task<ActionResult<InternationalLicenseDto>> IssueInternationalLicense(IssueInternationalLicenseDto issueInternationalLicenseDto)
     {
         ServiceResult<InternationalLicenseDto> result = await _applicationService.IssueInternationalLicenseAsync(issueInternationalLicenseDto);
 

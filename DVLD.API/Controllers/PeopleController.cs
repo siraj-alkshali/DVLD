@@ -70,7 +70,7 @@ public class PeopleController : ControllerBase
         return Ok(result.Data);
     }
 
-    [HttpPost("{personId}/image")]
+    [HttpPut("{personId}/image")]
     [ProducesResponseType(typeof(PersonDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -97,7 +97,7 @@ public class PeopleController : ControllerBase
         return NoContent();
     }
 
-    [HttpGet("nationalNo/{nationalNo}", Name = "GetPersonByNationalNo")]
+    [HttpGet("national-no/{nationalNo}", Name = "GetPersonByNationalNo")]
     [ProducesResponseType(typeof(PersonDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PersonDto>> GetPersonByNationalNo(string nationalNo)

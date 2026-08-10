@@ -29,7 +29,7 @@ public class UsersController : ControllerBase
     [HttpGet("{userId}", Name = "GetUserById")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserDto>> GetUserByUserId(int userId)
+    public async Task<ActionResult<UserDto>> GetUserById(int userId)
     {
         UserDto? user = await _userService.GetUserDtoByIdAsync(userId);
 
@@ -53,7 +53,7 @@ public class UsersController : ControllerBase
 
         return CreatedAtRoute(
             "GetUserById",
-            new { id = result.Data!.UserID },
+            new { userId = result.Data!.UserID },
             result.Data
         );
     }

@@ -62,7 +62,7 @@ public class LicenseService : ILicenseService
         };
     }
 
-    public async Task<LicenseDto?> GetLicenseDtoById(int licenseId)
+    public async Task<LicenseDto?> GetLicenseDtoByIdAsync(int licenseId)
     {
         return await _context.Licenses
         .AsNoTracking()

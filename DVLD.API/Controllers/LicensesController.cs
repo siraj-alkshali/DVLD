@@ -24,7 +24,7 @@ public class LicensesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<LicenseDto>> GetLicenseById(int licenseId)
     {
-        LicenseDto? license = await _licenseService.GetLicenseDtoById(licenseId);
+        LicenseDto? license = await _licenseService.GetLicenseDtoByIdAsync(licenseId);
 
         if (license == null)
             return NotFound();
@@ -43,7 +43,7 @@ public class LicensesController : ControllerBase
     [ProducesResponseType(typeof(LicenseDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<LicenseDto>> CreateNewDrivingLicenseApplication(CreateLicenseDto createLicenseDto)
+    public async Task<ActionResult<LicenseDto>> CreateLicense(CreateLicenseDto createLicenseDto)
     {
         ServiceResult<LicenseDto> result = await _licenseService.CreateNewLicenseAsync(createLicenseDto);
 

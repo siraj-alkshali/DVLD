@@ -13,8 +13,8 @@ public interface IApplicationService
 {
     Task<PagedResultDto<ApplicationDto>> GetAllApplicationsAsync(ApplicationsQueryParameters parameters);
     Task<ApplicationDto?> GetApplicationDtoByIdAsync(int applicationId);
-    Task<ServiceResult<ApplicationDto>> CreateNewDrivingLicenseApplicationAsync(CreateLocalDrivingLicenseApplicationDto createLocalDrivingLicenseApplicationDto);
-    Task<ServiceResult<TestAppointmentDto>> CreateNewRetakeTestApplicationAsync(CreateRetakeTestApplicationDto createRetakeTestApplicationDto);
+    Task<ServiceResult<ApplicationDto>> CreateLocalDrivingLicenseApplicationAsync(CreateLocalDrivingLicenseApplicationDto createLocalDrivingLicenseApplicationDto);
+    Task<ServiceResult<TestAppointmentDto>> CreateRetakeTestApplicationAsync(CreateRetakeTestApplicationDto createRetakeTestApplicationDto);
     Task<ServiceResult<LicenseDto>> RenewDrivingLicenseAsync(RenewLicenseDto renewLicenseDto);
     Task<ServiceResult<LicenseDto>> ReplaceDrivingLicenseAsync(ReplaceLicenseDto replaceLicenseDto);
     Task<ServiceResult<InternationalLicenseDto>> IssueInternationalLicenseAsync(IssueInternationalLicenseDto internationalLicenseDto);
