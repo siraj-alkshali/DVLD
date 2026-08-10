@@ -4,6 +4,6 @@ namespace DVLD.API.Services.Interfaces;
 
 public interface ILicenseIssueReasonService
 {
-    Task<IEnumerable<LicenseIssueReasonDto>> GetAllLicenseIssueReasonsAsync();
+    Task<List<LicenseIssueReasonDto>> GetAllLicenseIssueReasonsAsync();
     Task<LicenseIssueReasonDto?> GetLicenseIssueReasonById(int licenseIssueReasonId);
 }

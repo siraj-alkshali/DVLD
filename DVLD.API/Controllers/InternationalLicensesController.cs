@@ -1,4 +1,6 @@
+using DVLD.API.Common.QueryParameters;
 using DVLD.API.DTOs;
+using DVLD.API.DTOs.Common;
 using DVLD.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,6 +15,13 @@ public class InternationalLicensesController : ControllerBase
     public InternationalLicensesController(IInternationalLicenseService internationalLicenseService)
     {
         _internationalLicenseService = internationalLicenseService;
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResultDto<InternationalLicenseDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResultDto<InternationalLicenseDto>>> GetAllInternationalLicenses(InternationalLicensesQueryParameters parameters)
+    {
+        return Ok(await _internationalLicenseService.GetAllInternationalLicensesAsync(parameters));
     }
 
     [HttpGet("{internationalLicenseId}", Name = "GetInternationalLicenseById")]

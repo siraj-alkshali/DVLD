@@ -55,7 +55,6 @@ public class RefreshTokenService : IRefreshTokenService
 
     public async Task<RefreshToken?> GetRefreshTokenAsync(string token)
     {
-
         string tokenHash = HashToken(token);
 
         return await _context.RefreshTokens

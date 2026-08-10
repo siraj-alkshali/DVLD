@@ -3,9 +3,14 @@
     "applicationdate",
     "applicationstatus",
     "applicationtype",
+    "detaindate",
     "DVLD",
+    "expirationdate",
+    "finefees",
     "firstname",
     "Hmac",
-    "lastname"
+    "issuedate",
+    "lastname",
+    "releasedate"
   ]
 }

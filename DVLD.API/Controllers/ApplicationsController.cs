@@ -62,7 +62,7 @@ public class ApplicationsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TestAppointmentDto>> CreateRetakeTestApplication(CreateRetakeTestApplicationDto createRetakeTestApplicationDto)
     {
-        ServiceResult<TestAppointmentDto> result = await _applicationService.CreateNewRetakeTestApplication(createRetakeTestApplicationDto);
+        ServiceResult<TestAppointmentDto> result = await _applicationService.CreateNewRetakeTestApplicationAsync(createRetakeTestApplicationDto);
 
         if (!result.IsSuccess)
             return this.ToActionResult(result);
@@ -118,7 +118,7 @@ public class ApplicationsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<DetainedLicenseDto>> ReleaseDetainedLicense(ReleaseDetainedLicenseDto releaseDetainedLicenseDto)
     {
-        ServiceResult<DetainedLicenseDto> result = await _applicationService.ReleaseDetainedLicense(releaseDetainedLicenseDto);
+        ServiceResult<DetainedLicenseDto> result = await _applicationService.ReleaseDetainedLicenseAsync(releaseDetainedLicenseDto);
 
         if (!result.IsSuccess)
             return this.ToActionResult(result);

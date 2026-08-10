@@ -37,8 +37,8 @@ public class TestService : ITestService
         if (testApp.IsLocked)
             return ServiceResult<TestAppointment>.Failure(["A result has already been recorded for this appointment"], FailureType.Conflict);
 
-        // if (testApp.AppointmentTime > DateTime.Now)
-        //     return ServiceResult<TestDto>.Failure(["Cannot submit a test result before the appointment time"], FailureType.Conflict);
+        if (testApp.AppointmentTime > DateTime.Now)
+            return ServiceResult<TestAppointment>.Failure(["Cannot submit a test result before the appointment time"], FailureType.Conflict);
 
         if (!_localDrivingLicenseApplicationService.IsActive(testApp.LocalDrivingLicenseApplication))
             return ServiceResult<TestAppointment>.Failure(["Cannot schedule a test appointment because the application is not active"], FailureType.Conflict);
@@ -59,7 +59,7 @@ public class TestService : ITestService
             CreatedByUserID = _currentUserService.UserID
         };
     }
-    public async Task<ServiceResult<TestDto>> CreateNewTestResult(CreateTestDto createTestDto)
+    public async Task<ServiceResult<TestDto>> CreateNewTestResultAsync(CreateTestDto createTestDto)
     {
 
         ServiceResult<TestAppointment> testAppointmentValidation = await ValidateAndGetTestAppointment(createTestDto);
@@ -160,5 +160,35 @@ public class TestService : ITestService
             .Select(t => t.TestAppointment.TestTypeID)
             .Distinct()
             .CountAsync() == 3;
+    }
+
+    public async Task<List<TestListItemDto>> GetAllTestsForLocalDrivingAppAsync(int localDrivingAppId)
+    {
+        return await _context.Tests
+        .AsNoTracking()
+        .Where(t => t.TestAppointment.LocalDrivingLicenseApplication.LocalDrivingLicenseApplicationID == localDrivingAppId)
+        .OrderByDescending(t => t.TestAppointment.AppointmentTime)
+        .Select(t => new TestListItemDto(
+            t.TestID,
+            t.TestAppointment.TestType.TestTypeTitle,
+            t.TestAppointment.AppointmentTime,
+            t.Passed
+        )).ToListAsync();
+    }
+
+    public async Task<TestDto?> GetTestDtoByIdAsync(int testId)
+    {
+        return await _context.Tests
+        .Where(t => t.TestID == testId)
+        .Select(t => new TestDto(
+            t.TestID,
+            t.TestAppointment.TestType.TestTypeTitle,
+            $"{t.TestAppointment.LocalDrivingLicenseApplication.BaseApplication.ApplicantPerson.FirstName} {t.TestAppointment.LocalDrivingLicenseApplication.BaseApplication.ApplicantPerson.LastName}",
+            t.TestAppointment.LocalDrivingLicenseApplication.BaseApplication.ApplicantPerson.NationalNo,
+            t.TestAppointment.AppointmentTime,
+            t.Passed,
+            t.Notes,
+            t.CreatedByUser.UserName
+        )).SingleOrDefaultAsync();
     }
 }

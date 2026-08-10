@@ -16,10 +16,11 @@ public class CountryService : ICountryService
         _context = context;
     }
 
-    public async Task<IEnumerable<CountryDto>> GetAllCountriesAsync()
+    public async Task<List<CountryDto>> GetAllCountriesAsync()
     {
-        return await _context.Countries.Select(c => new CountryDto(c.CountryID, c.CountryName))
+        return await _context.Countries
         .AsNoTracking()
+        .Select(c => new CountryDto(c.CountryID, c.CountryName))
         .ToListAsync();
     }
 

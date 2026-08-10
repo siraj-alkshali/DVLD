@@ -17,18 +17,18 @@ public class GendersController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<GenderDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<GenderDto>>> GetAllGenders()
+    [ProducesResponseType(typeof(List<GenderDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<GenderDto>>> GetAllGenders()
     {
         return Ok(await _genderService.GetAllGendersAsync());
     }
 
-    [HttpGet("{id}", Name = "GetGenderById")]
+    [HttpGet("{genderId}", Name = "GetGenderById")]
     [ProducesResponseType(typeof(GenderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<GenderDto>> GetGenderById(int id)
+    public async Task<ActionResult<GenderDto>> GetGenderById(int genderId)
     {
-        GenderDto? gender = await _genderService.GetGenderDtoByIdAsync(id);
+        GenderDto? gender = await _genderService.GetGenderDtoByIdAsync(genderId);
 
         if (gender == null)
             return NotFound();

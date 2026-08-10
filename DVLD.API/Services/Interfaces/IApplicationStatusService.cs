@@ -4,6 +4,6 @@ namespace DVLD.API.Services.Interfaces;
 
 public interface IApplicationStatusService
 {
-    Task<IEnumerable<ApplicationStatusDto>> GetAllApplicationStatusesAsync();
+    Task<List<ApplicationStatusDto>> GetAllApplicationStatusesAsync();
     Task<ApplicationStatusDto?> GetApplicationStatusByIdAsync(int applicationStatusId);
 }

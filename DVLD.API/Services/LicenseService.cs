@@ -6,7 +6,8 @@ using DVLD.DataAccess.Data;
 using DVLD.DataAccess.Entities;
 using DVLD.API.Extensions;
 using Microsoft.EntityFrameworkCore;
-using DVLD.API.Mappings.Applications;
+using DVLD.API.Common.QueryParameters;
+using DVLD.API.DTOs.Common;
 
 namespace DVLD.API.Services;
 
@@ -23,6 +24,42 @@ public class LicenseService : ILicenseService
         _driverService = driverService;
         _currentUserService = currentUserService;
         _testService = testService;
+    }
+
+    public async Task<PagedResultDto<LicenseDto>> GetAllLicensesAsync(LicenseQueryParameters parameters)
+    {
+        IQueryable<License> query = _context.Licenses
+        .AsNoTracking()
+        .Include(l => l.Application)
+        .ThenInclude(app => app.ApplicantPerson)
+        .Include(l => l.LicenseClass)
+        .Include(l => l.LicenseIssueReason)
+        .ApplySearch(parameters.SearchTerm)
+        .ApplyFilter(parameters)
+        .ApplySort(parameters);
+
+        int totalItems = await query.CountAsync();
+
+        List<LicenseDto> items = await query.ApplyPagination(parameters)
+        .Select(l => new LicenseDto(
+            l.LicenseID,
+            $"{l.Application.ApplicantPerson.FirstName} {l.Application.ApplicantPerson.LastName}",
+            l.Application.ApplicantPerson.NationalNo,
+            l.Application.ApplicantPerson.Phone,
+            l.LicenseClass.ClassName,
+            l.LicenseIssueReason.IssueReasonName,
+            l.IssueDate,
+            l.ExpirationDate,
+            l.IsActive
+        )).ToListAsync();
+
+        return new PagedResultDto<LicenseDto>
+        {
+            Items = items,
+            TotalItems = totalItems,
+            PageSize = parameters.PageSize,
+            PageNumber = parameters.PageNumber
+        };
     }
 
     public async Task<LicenseDto?> GetLicenseDtoById(int licenseId)
@@ -162,5 +199,21 @@ public class LicenseService : ILicenseService
         .ThenInclude(d => d.Person)
         .Include(l => l.Detentions)
         .SingleOrDefaultAsync(l => l.LicenseID == licenseId);
+    }
+
+    public async Task<List<LicenseListItemDto>> GetAllLicensesForDriverAsync(int driverId)
+    {
+        return await _context.Licenses
+        .AsNoTracking()
+        .Where(l => l.DriverID == driverId)
+        .OrderByDescending(l => l.IssueDate)
+        .Select(l => new LicenseListItemDto(
+            l.LicenseID,
+            l.LicenseClass.ClassName,
+            l.LicenseIssueReason.IssueReasonName,
+            l.IssueDate,
+            l.ExpirationDate,
+            l.IsActive
+        )).ToListAsync();
     }
 }

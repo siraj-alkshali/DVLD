@@ -8,7 +8,6 @@ namespace DVLD.API.Controllers;
 [Route("api/test-types")]
 public class TestTypesController : ControllerBase
 {
-
     private readonly ITestTypeService _testTypeService;
 
     public TestTypesController(ITestTypeService testTypeService)
@@ -17,18 +16,18 @@ public class TestTypesController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<TestTypeDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<TestTypeDto>>> GetAllTestTypes()
+    [ProducesResponseType(typeof(List<TestTypeDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<TestTypeDto>>> GetAllTestTypes()
     {
         return Ok(await _testTypeService.GetAllTestTypesAsync());
     }
 
-    [HttpGet("{id}", Name = "GetTestTypeById")]
+    [HttpGet("{testTypeId}", Name = "GetTestTypeById")]
     [ProducesResponseType(typeof(TestTypeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TestTypeDto>> GetTestTypeById(int id)
+    public async Task<ActionResult<TestTypeDto>> GetTestTypeById(int testTypeId)
     {
-        TestTypeDto? testType = await _testTypeService.GetTestTypeDtoByIdAsync(id);
+        TestTypeDto? testType = await _testTypeService.GetTestTypeDtoByIdAsync(testTypeId);
 
         if (testType == null)
             return NotFound();

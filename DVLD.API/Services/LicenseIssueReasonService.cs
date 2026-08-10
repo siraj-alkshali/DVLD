@@ -14,18 +14,19 @@ public class LicenseIssueReasonService : ILicenseIssueReasonService
         _context = context;
     }
 
-    public async Task<IEnumerable<LicenseIssueReasonDto>> GetAllLicenseIssueReasonsAsync()
+    public async Task<List<LicenseIssueReasonDto>> GetAllLicenseIssueReasonsAsync()
     {
-        return await _context.LicenseIssueReasons.Select(lir => new LicenseIssueReasonDto(
-        lir.IssueReasonID, lir.IssueReasonName
-        )).ToListAsync();
+        return await _context.LicenseIssueReasons
+        .AsNoTracking()
+        .Select(lir => new LicenseIssueReasonDto(lir.IssueReasonID, lir.IssueReasonName))
+        .ToListAsync();
     }
 
-    public async Task<LicenseIssueReasonDto?> GetLicenseIssueReasonById(int id)
+    public async Task<LicenseIssueReasonDto?> GetLicenseIssueReasonById(int licenseIssueReasonId)
     {
-        return await _context.LicenseIssueReasons.Where(lir => lir.IssueReasonID == id)
-        .Select(lir => new LicenseIssueReasonDto(
-        lir.IssueReasonID, lir.IssueReasonName
-        )).SingleOrDefaultAsync();
+        return await _context.LicenseIssueReasons
+        .Where(lir => lir.IssueReasonID == licenseIssueReasonId)
+        .Select(lir => new LicenseIssueReasonDto(lir.IssueReasonID, lir.IssueReasonName))
+        .SingleOrDefaultAsync();
     }
 }

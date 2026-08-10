@@ -10,7 +10,7 @@ public static class PersonMappingExtensions
         return new PersonDto(
             person.PersonID,
             person.NationalNo,
-            $"{person.FirstName} {person.SecondName} {person.ThirdName} {person.LastName}",
+            $"{person.FirstName} {person.SecondName} {person.LastName}",
             person.DateOfBirth,
             person.Gender.GenderName,
             person.Address,

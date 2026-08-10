@@ -8,5 +8,5 @@ public interface ITestAppointmentService
 {
     Task<ServiceResult<TestAppointmentDto>> CreateTestAppointmentAsync(CreateTestAppointmentDto createTestAppointmentDto);
     Task<TestAppointmentDto?> GetTestAppointmentDtoByIdAsync(int testAppointmentId);
-    Task<bool> RetakeTestAlreadyBooked(int localAppId, int testTypeId);
+    Task<bool> RetakeTestAlreadyBookedAsync(int localAppId, int testTypeId);
 }

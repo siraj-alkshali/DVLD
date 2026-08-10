@@ -16,20 +16,18 @@ public class LicenseClassService : ILicenseClassService
         _context = context;
     }
 
-    public async Task<IEnumerable<LicenseClassDto>> GetAllLicenseClassesAsync()
+    public async Task<List<LicenseClassDto>> GetAllLicenseClassesAsync()
     {
-        return await _context.LicenseClasses.Select(lc => new LicenseClassDto(lc.LicenseClassID, lc.ClassName, lc.ClassDescription, lc.MinimumAllowedAge, lc.DefaultValidityLength, lc.ClassFees))
+        return await _context.LicenseClasses
+        .AsNoTracking()
+        .Select(lc => new LicenseClassDto(lc.LicenseClassID, lc.ClassName, lc.ClassDescription, lc.MinimumAllowedAge, lc.DefaultValidityLength, lc.ClassFees))
         .ToListAsync();
     }
 
-    // public async Task<LicenseClass?> GetLicenseClassByIdAsync(int licenseClassId)
-    // {
-    //     return await _context.LicenseClasses.FindAsync(licenseClassId);
-    // }
-
     public async Task<LicenseClassDto?> GetLicenseClassDtoByIdAsync(int licenseClassId)
     {
-        return await _context.LicenseClasses.Where(lc => lc.LicenseClassID == licenseClassId)
+        return await _context.LicenseClasses
+        .Where(lc => lc.LicenseClassID == licenseClassId)
         .Select(lc => new LicenseClassDto(lc.LicenseClassID, lc.ClassName, lc.ClassDescription, lc.MinimumAllowedAge, lc.DefaultValidityLength, lc.ClassFees))
         .SingleOrDefaultAsync();
     }

@@ -5,7 +5,7 @@ namespace DVLD.API.Services.Interfaces;
 
 public interface ILicenseClassService
 {
-    Task<IEnumerable<LicenseClassDto>> GetAllLicenseClassesAsync();
+    Task<List<LicenseClassDto>> GetAllLicenseClassesAsync();
     Task<LicenseClassDto?> GetLicenseClassDtoByIdAsync(int licenseClassId);
     Task<bool> LicenseClassExistsAsync(int licenseClassId);
 }

@@ -15,28 +15,24 @@ public class TestTypeService : ITestTypeService
         _context = context;
     }
 
-    public async Task<IEnumerable<TestTypeDto>> GetAllTestTypesAsync()
+    public async Task<List<TestTypeDto>> GetAllTestTypesAsync()
     {
-        return await _context.TestTypes.Select(tt => new TestTypeDto(
-        tt.TestTypeID, tt.TestTypeTitle, tt.TestTypeDescription, tt.TestTypeFees
-        )).ToListAsync();
+        return await _context.TestTypes
+        .AsNoTracking()
+        .Select(tt => new TestTypeDto(tt.TestTypeID, tt.TestTypeTitle, tt.TestTypeDescription, tt.TestTypeFees))
+        .ToListAsync();
     }
 
     public async Task<TestTypeDto?> GetTestTypeDtoByIdAsync(int testTypeId)
     {
-        return await _context.TestTypes.Where(tt => tt.TestTypeID == testTypeId)
-        .Select(tt => new TestTypeDto(
-        tt.TestTypeID, tt.TestTypeTitle, tt.TestTypeDescription, tt.TestTypeFees
-        )).SingleOrDefaultAsync();
+        return await _context.TestTypes
+        .Where(tt => tt.TestTypeID == testTypeId)
+        .Select(tt => new TestTypeDto(tt.TestTypeID, tt.TestTypeTitle, tt.TestTypeDescription, tt.TestTypeFees))
+        .SingleOrDefaultAsync();
     }
 
     public async Task<TestType?> GetTestTypeByIdAsync(int testTypeId)
     {
         return await _context.TestTypes.FindAsync(testTypeId);
-    }
-
-    public async Task<bool> TestTypeExistsAsync(int testTypeId)
-    {
-        return await _context.TestTypes.AnyAsync(tt => tt.TestTypeID == testTypeId);
     }
 }

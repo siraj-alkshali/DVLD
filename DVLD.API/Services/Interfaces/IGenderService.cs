@@ -5,7 +5,7 @@ namespace DVLD.API.Services.Interfaces;
 
 public interface IGenderService
 {
-    Task<IEnumerable<GenderDto>> GetAllGendersAsync();
+    Task<List<GenderDto>> GetAllGendersAsync();
     Task<Gender?> GetGenderByIdAsync(int genderId);
     Task<GenderDto?> GetGenderDtoByIdAsync(int genderId);
 }

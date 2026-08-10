@@ -1,4 +1,6 @@
+using DVLD.API.Common.QueryParameters;
 using DVLD.API.Common.Results;
+using DVLD.API.DTOs.Common;
 using DVLD.API.DTOs.DetainedLicenses;
 using DVLD.API.Extensions;
 using DVLD.API.Services.Interfaces;
@@ -15,6 +17,13 @@ public class DetainedLicensesController : ControllerBase
     public DetainedLicensesController(IDetainedLicenseService detainedLicenseService)
     {
         _detainedLicenseService = detainedLicenseService;
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResultDto<DetainedLicenseDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResultDto<DetainedLicenseDto>>> GetAllDetainedLicenses([FromQuery] DetainedLicensesQueryParameters parameters)
+    {
+        return Ok(await _detainedLicenseService.GetAllDetainedLicensesAsync(parameters));
     }
 
     [HttpGet("{detainedLicenseId}", Name = "GetDetainedLicenseById")]

@@ -3,6 +3,8 @@ using DVLD.API.Services.Interfaces;
 using DVLD.API.Common.Results;
 using DVLD.API.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using DVLD.API.Common.QueryParameters;
+using DVLD.API.DTOs.Common;
 
 namespace DVLD.API.Controllers;
 
@@ -28,6 +30,13 @@ public class LicensesController : ControllerBase
             return NotFound();
 
         return Ok(license);
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResultDto<LicenseDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResultDto<LicenseDto>>> GetAllLicenses([FromQuery] LicenseQueryParameters parameters)
+    {
+        return Ok(await _licenseService.GetAllLicensesAsync(parameters));
     }
 
     [HttpPost]

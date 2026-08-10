@@ -4,6 +4,9 @@ using DVLD.API.DTOs.DetainedLicenses;
 using Microsoft.EntityFrameworkCore;
 using DVLD.DataAccess.Entities;
 using DVLD.API.Common.Results;
+using DVLD.API.DTOs.Common;
+using DVLD.API.Extensions;
+using DVLD.API.Common.QueryParameters;
 
 namespace DVLD.API.Services;
 
@@ -20,6 +23,41 @@ public class DetainedLicenseService : IDetainedLicenseService
         _currentUserService = currentUserService;
     }
 
+    public async Task<PagedResultDto<DetainedLicenseDto>> GetAllDetainedLicensesAsync(DetainedLicensesQueryParameters parameters)
+    {
+        IQueryable<DetainedLicense> query = _context.DetainedLicenses
+        .AsNoTracking()
+        .Include(dl => dl.License)
+        .ThenInclude(l => l.Driver)
+        .ThenInclude(d => d.Person)
+        .Include(dl => dl.CreatedByUser)
+        .ApplySearch(parameters.SearchTerm)
+        .ApplyFilter(parameters)
+        .ApplySort(parameters);
+
+        int totalItems = await query.CountAsync();
+
+        List<DetainedLicenseDto> items = await query.ApplyPagination(parameters)
+        .Select(dl => new DetainedLicenseDto(
+            dl.DetainID,
+            $"{dl.License.Driver.Person.FirstName} {dl.License.Driver.Person.LastName}",
+            dl.License.Driver.Person.NationalNo,
+            dl.License.Driver.Person.Phone,
+            dl.FineFees,
+            dl.DetainDate,
+            dl.ReleaseDate,
+            dl.CreatedByUser.UserName
+        )).ToListAsync();
+
+        return new PagedResultDto<DetainedLicenseDto>
+        {
+            Items = items,
+            TotalItems = totalItems,
+            PageSize = parameters.PageSize,
+            PageNumber = parameters.PageNumber
+        };
+    }
+
     private async Task<ServiceResult<License>> ValidateAndGetLicenseForDetentionAsync(DetainLicenseDto detainLicenseDto)
     {
         if (detainLicenseDto.FineFees <= 0)
@@ -30,11 +68,11 @@ public class DetainedLicenseService : IDetainedLicenseService
         if (license == null)
             return ServiceResult<License>.Failure(["This license does not exist"], FailureType.NotFound);
 
-        if (!license.IsActive)
-            return ServiceResult<License>.Failure(["This license is inactive"], FailureType.Conflict);
-
         if (license.Detentions.Any(d => d.ReleaseDate == null))
             return ServiceResult<License>.Failure(["This license is already detained"], FailureType.Conflict);
+
+        if (!license.IsActive)
+            return ServiceResult<License>.Failure(["This license is inactive"], FailureType.Conflict);
 
         return ServiceResult<License>.Success(license);
     }

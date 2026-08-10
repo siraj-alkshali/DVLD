@@ -1,7 +1,10 @@
+using DVLD.API.Common.QueryParameters;
 using DVLD.API.DTOs;
-using DVLD.API.Mappings.People;
+using DVLD.API.DTOs.Common;
+using DVLD.API.Extensions;
 using DVLD.API.Services.Interfaces;
 using DVLD.DataAccess.Data;
+using DVLD.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace DVLD.API.Services;
@@ -13,6 +16,41 @@ public class InternationalLicenseService : IInternationalLicenseService
     public InternationalLicenseService(DVLDContext context)
     {
         _context = context;
+    }
+
+    public async Task<PagedResultDto<InternationalLicenseDto>> GetAllInternationalLicensesAsync(InternationalLicensesQueryParameters parameters)
+    {
+        IQueryable<InternationalLicense> query = _context.InternationalLicenses
+        .AsNoTracking()
+        .Include(intlLicense => intlLicense.Driver)
+        .ThenInclude(intlLicense => intlLicense.Person)
+        .Include(intlLicense => intlLicense.IssuedUsingLocalLicense)
+        .ThenInclude(intlLicense => intlLicense.LicenseClass)
+        .ApplySearch(parameters.SearchTerm)
+        .ApplyFilter(parameters)
+        .ApplySort(parameters);
+
+        int totalItems = await query.CountAsync();
+
+        List<InternationalLicenseDto> items = await query.ApplyPagination(parameters)
+        .Select(intlLicense => new InternationalLicenseDto(
+            intlLicense.InternationalLicenseID,
+            $"{intlLicense.Driver.Person.FirstName} {intlLicense.Driver.Person.LastName}",
+            intlLicense.Driver.Person.NationalNo,
+            intlLicense.Driver.Person.Phone,
+            intlLicense.IssuedUsingLocalLicense.LicenseClass.ClassName,
+            intlLicense.IssueDate,
+            intlLicense.ExpirationDate,
+            intlLicense.IsActive
+        )).ToListAsync();
+
+        return new PagedResultDto<InternationalLicenseDto>
+        {
+            Items = items,
+            TotalItems = totalItems,
+            PageSize = parameters.PageSize,
+            PageNumber = parameters.PageNumber
+        };
     }
 
     public async Task<InternationalLicenseDto?> GetInternationalLicenseDtoByIdAsync(int internationalLicenseId)

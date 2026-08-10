@@ -16,11 +16,23 @@ public class ApplicationTypeService : IApplicationTypeService
         _context = context;
     }
 
-    public async Task<IEnumerable<ApplicationTypeDto>> GetAllApplicationTypesAsync()
+    public async Task<List<ApplicationTypeDto>> GetAllApplicationTypesAsync()
     {
-        return await _context.ApplicationTypes.Select(appType => new ApplicationTypeDto(
-        appType.ApplicationTypeID, appType.ApplicationTypeTitle, appType.ApplicationFees
-        )).ToListAsync();
+        return await _context.ApplicationTypes
+        .AsNoTracking()
+        .Select(appType => new ApplicationTypeDto(appType.ApplicationTypeID, appType.ApplicationTypeTitle, appType.ApplicationFees))
+        .ToListAsync();
+    }
+
+    public async Task<ApplicationTypeDto?> GetApplicationTypeDtoByIdAsync(int applicationTypeId)
+    {
+        return await _context.ApplicationTypes
+        .Where(appType => appType.ApplicationTypeID == applicationTypeId)
+        .Select(appType => new ApplicationTypeDto(
+            appType.ApplicationTypeID,
+            appType.ApplicationTypeTitle,
+            appType.ApplicationFees))
+        .SingleOrDefaultAsync();
     }
 
     public async Task<decimal> GetApplicationTypeFeesAsync(enApplicationType applicationType)

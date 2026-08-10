@@ -15,9 +15,9 @@ public class ApplicationStatusService : IApplicationStatusService
         _context = context;
     }
 
-    public async Task<ApplicationStatusDto?> GetApplicationStatusByIdAsync(int id)
+    public async Task<ApplicationStatusDto?> GetApplicationStatusByIdAsync(int applicationStatusId)
     {
-        ApplicationStatus? appStatus = await _context.ApplicationStatuses.FindAsync(id);
+        ApplicationStatus? appStatus = await _context.ApplicationStatuses.FindAsync(applicationStatusId);
 
         if (appStatus == null)
             return null;
@@ -25,10 +25,11 @@ public class ApplicationStatusService : IApplicationStatusService
         return new ApplicationStatusDto(appStatus.ApplicationStatusID, appStatus.StatusName);
     }
 
-    public async Task<IEnumerable<ApplicationStatusDto>> GetAllApplicationStatusesAsync()
+    public async Task<List<ApplicationStatusDto>> GetAllApplicationStatusesAsync()
     {
-        return await _context.ApplicationStatuses.Select(appStatus => new ApplicationStatusDto(
-        appStatus.ApplicationStatusID, appStatus.StatusName
-        )).ToListAsync();
+        return await _context.ApplicationStatuses
+        .AsNoTracking()
+        .Select(appStatus => new ApplicationStatusDto(appStatus.ApplicationStatusID, appStatus.StatusName))
+        .ToListAsync();
     }
 }

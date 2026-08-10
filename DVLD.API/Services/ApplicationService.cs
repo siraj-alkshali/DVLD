@@ -188,7 +188,7 @@ public class ApplicationService : IApplicationService
         if (failedTest.Passed)
             return ServiceResult<Test>.Failure(["This applicant has passed this test"], FailureType.Conflict);
 
-        if (await _testAppointmentService.RetakeTestAlreadyBooked(failedTest.TestAppointment.LocalDrivingLicenseApplicationID, failedTest.TestAppointment.TestTypeID))
+        if (await _testAppointmentService.RetakeTestAlreadyBookedAsync(failedTest.TestAppointment.LocalDrivingLicenseApplicationID, failedTest.TestAppointment.TestTypeID))
             return ServiceResult<Test>.Failure(["This applicant already has a retake appointment for this test"], FailureType.Conflict);
 
         return ServiceResult<Test>.Success(failedTest);
@@ -213,7 +213,7 @@ public class ApplicationService : IApplicationService
         };
     }
 
-    public async Task<ServiceResult<TestAppointmentDto>> CreateNewRetakeTestApplication(CreateRetakeTestApplicationDto createRetakeTestApplicationDto)
+    public async Task<ServiceResult<TestAppointmentDto>> CreateNewRetakeTestApplicationAsync(CreateRetakeTestApplicationDto createRetakeTestApplicationDto)
     {
         ServiceResult<Test> validationForNewTest = await ValidateForTestEligibility(createRetakeTestApplicationDto.TestID);
 
@@ -273,8 +273,8 @@ public class ApplicationService : IApplicationService
         if (oldLicense == null)
             return ServiceResult<License>.Failure(["This license does not exist"], FailureType.NotFound);
 
-        if (oldLicense.IsActive)
-            return ServiceResult<License>.Failure(["Cannot replace an active license"], FailureType.Conflict);
+        if (!oldLicense.IsActive)
+            return ServiceResult<License>.Failure(["Cannot renew an inactive license"], FailureType.Conflict);
 
         if (oldLicense.ExpirationDate > today.AddDays(30))
             return ServiceResult<License>.Failure(["License is not yet eligible for renewal"], FailureType.Conflict);
@@ -549,7 +549,7 @@ public class ApplicationService : IApplicationService
         return ServiceResult<(License license, DetainedLicense detainInfo)>.Success((license, detainInfo));
     }
 
-    public async Task<ServiceResult<DetainedLicenseDto>> ReleaseDetainedLicense(ReleaseDetainedLicenseDto releaseDetainedLicenseDto)
+    public async Task<ServiceResult<DetainedLicenseDto>> ReleaseDetainedLicenseAsync(ReleaseDetainedLicenseDto releaseDetainedLicenseDto)
     {
         ServiceResult<(License license, DetainedLicense detainInfo)> licenseValidationBeforeRelease = await ValidateAndGetLicenseForRelease(releaseDetainedLicenseDto.LicenseID);
 

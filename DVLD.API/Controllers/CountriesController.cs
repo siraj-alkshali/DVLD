@@ -17,18 +17,18 @@ public class CountriesController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<CountryDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<CountryDto>>> GetAllCountries()
+    [ProducesResponseType(typeof(List<CountryDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<CountryDto>>> GetAllCountries()
     {
         return Ok(await _countryService.GetAllCountriesAsync());
     }
 
-    [HttpGet("{id}", Name = "GetCountryById")]
+    [HttpGet("{countryId}", Name = "GetCountryById")]
     [ProducesResponseType(typeof(CountryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CountryDto>> GetCountryById(int id)
+    public async Task<ActionResult<CountryDto>> GetCountryById(int countryId)
     {
-        CountryDto? country = await _countryService.GetCountryDtoByIdAsync(id);
+        CountryDto? country = await _countryService.GetCountryDtoByIdAsync(countryId);
 
         if (country == null)
             return NotFound();

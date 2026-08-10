@@ -16,8 +16,8 @@ public class LicenseIssueReasonsController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<LicenseIssueReasonDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<LicenseIssueReasonDto>>> GetAllTestTypes()
+    [ProducesResponseType(typeof(List<LicenseIssueReasonDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<LicenseIssueReasonDto>>> GetAllTestTypes()
     {
         return Ok(await _licenseIssueReasonService.GetAllLicenseIssueReasonsAsync());
     }

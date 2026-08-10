@@ -2,6 +2,7 @@ using DVLD.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using DVLD.API.Common.Files;
 using DVLD.API.Common.Results;
+using DVLD.API.Extensions;
 
 namespace DVLD.API.Controllers;
 
@@ -24,7 +25,7 @@ public class ImagesController : ControllerBase
         ServiceResult<string> result = await _imageService.UploadImageAsync(file);
 
         if (!result.IsSuccess)
-            return NotFound();
+            return this.ToActionResult(result);
 
         return Ok(result.Data);
     }

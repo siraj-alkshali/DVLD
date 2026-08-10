@@ -23,7 +23,7 @@ public class CurrentUserService : ICurrentUserService
             string? userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (!int.TryParse(userId, out int id))
-                throw new InvalidOperationException("Current user ID is unavailable.");
+                throw new InvalidOperationException("Current user ID is unavailable");
 
             return id;
         }
@@ -31,5 +31,5 @@ public class CurrentUserService : ICurrentUserService
 
     public string UserName =>
         User.FindFirstValue(ClaimTypes.Name)
-        ?? throw new InvalidOperationException("Current username is unavailable.");
+        ?? throw new InvalidOperationException("Current username is unavailable");
 }

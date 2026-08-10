@@ -27,7 +27,8 @@ public class AuthService : IAuthService
 
     private async Task<User?> GetUserByUserNameAsync(string userName)
     {
-        return await _context.Users.AsNoTracking()
+        return await _context.Users
+        .AsNoTracking()
         .Include(u => u.Person)
         .Include(u => u.Role)
         .SingleOrDefaultAsync(u => u.UserName == userName);
@@ -131,6 +132,4 @@ public class AuthService : IAuthService
 
         return user.ToDto();
     }
-
-
 }

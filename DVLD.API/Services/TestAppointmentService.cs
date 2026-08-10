@@ -135,7 +135,7 @@ public class TestAppointmentService : ITestAppointmentService
         return ServiceResult<TestAppointmentDto>.Success(savedTestDto);
     }
 
-    public async Task<bool> RetakeTestAlreadyBooked(int localAppId, int testTypeId)
+    public async Task<bool> RetakeTestAlreadyBookedAsync(int localAppId, int testTypeId)
     {
         return await _context.TestAppointments.AnyAsync(ta => ta.LocalDrivingLicenseApplicationID == localAppId
         && ta.TestTypeID == testTypeId

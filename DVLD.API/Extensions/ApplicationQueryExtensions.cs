@@ -24,16 +24,16 @@ public static class ApplicationQueryExtensions
             return query;
 
         if (parameters.ApplicationTypeID.HasValue)
-            query = query.Where(app => app.ApplicationTypeID == parameters.ApplicationTypeID.Value);
+            query = query.Where(app => app.ApplicationTypeID == parameters.ApplicationTypeID);
 
         if (parameters.ApplicationStatusID.HasValue)
-            query = query.Where(app => app.ApplicationStatusID == parameters.ApplicationStatusID.Value);
+            query = query.Where(app => app.ApplicationStatusID == parameters.ApplicationStatusID);
 
         if (parameters.DateFrom.HasValue)
-            query = query.Where(app => app.ApplicationDate >= parameters.DateFrom.Value);
+            query = query.Where(app => app.ApplicationDate >= parameters.DateFrom);
 
         if (parameters.DateTo.HasValue)
-            query = query.Where(app => app.ApplicationDate <= parameters.DateTo.Value);
+            query = query.Where(app => app.ApplicationDate <= parameters.DateTo);
 
         return query;
     }

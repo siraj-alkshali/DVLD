@@ -16,18 +16,18 @@ public class ApplicationStatusesController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<ApplicationStatusDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ApplicationStatusDto>>> GetAllApplicationStatuses()
+    [ProducesResponseType(typeof(List<ApplicationStatusDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<ApplicationStatusDto>>> GetAllApplicationStatuses()
     {
         return Ok(await _applicationStatusService.GetAllApplicationStatusesAsync());
     }
 
-    [HttpGet("{id}", Name = "GetApplicationStatusById")]
+    [HttpGet("{applicationStatusId}", Name = "GetApplicationStatusById")]
     [ProducesResponseType(typeof(ApplicationStatusDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApplicationStatusDto>> GetApplicationStatusById(int id)
+    public async Task<ActionResult<ApplicationStatusDto>> GetApplicationStatusById(int applicationStatusId)
     {
-        ApplicationStatusDto? applicationStatus = await _applicationStatusService.GetApplicationStatusByIdAsync(id);
+        ApplicationStatusDto? applicationStatus = await _applicationStatusService.GetApplicationStatusByIdAsync(applicationStatusId);
 
         if (applicationStatus == null)
             return NotFound();

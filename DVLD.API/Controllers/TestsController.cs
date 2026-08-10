@@ -17,18 +17,30 @@ public class TestsController : ControllerBase
         _testService = testService;
     }
 
+    [HttpGet("{testId}")]
+    [ProducesResponseType(typeof(TestDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TestDto>> GetTestById(int testId)
+    {
+        TestDto? test = await _testService.GetTestDtoByIdAsync(testId);
+
+        if (test == null)
+            return NotFound();
+
+        return Ok(test);
+    }
+
     [HttpPost]
-    // [ProducesResponseType(typeof(ApplicationDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(TestDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<TestDto>> CreateNewTestAppointment(CreateTestDto dto)
+    public async Task<ActionResult<TestDto>> CreateNewTestResult(CreateTestDto createTestDto)
     {
-        ServiceResult<TestDto> result = await _testService.CreateNewTestResult(dto);
+        ServiceResult<TestDto> result = await _testService.CreateNewTestResultAsync(createTestDto);
 
         if (!result.IsSuccess)
             return this.ToActionResult(result);
 
-        return Ok(result.Data);
+        return CreatedAtRoute("GetTestById", new { testId = result.Data!.TestID }, result.Data);
     }
 }

@@ -23,10 +23,10 @@ public static class UserQueryExtensions
             return query;
 
         if (parameters.IsActive.HasValue)
-            query = query.Where(u => u.IsActive == parameters.IsActive.Value);
+            query = query.Where(u => u.IsActive == parameters.IsActive);
 
         if (parameters.RoleID.HasValue)
-            query = query.Where(u => u.RoleID == parameters.RoleID.Value);
+            query = query.Where(u => u.RoleID == parameters.RoleID);
 
         return query;
     }

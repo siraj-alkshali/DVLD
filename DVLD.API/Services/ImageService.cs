@@ -24,7 +24,7 @@ public class ImageService : IImageService
         await stream.ReadAsync(buffer, 0, buffer.Length);
 
         return buffer.Take(3).SequenceEqual(ImageSettings.JpegSignature)
-            || buffer.SequenceEqual(ImageSettings.PngSignature);
+        || buffer.SequenceEqual(ImageSettings.PngSignature);
     }
 
     private async Task<ServiceResult> ValidateImage(IFormFile file)

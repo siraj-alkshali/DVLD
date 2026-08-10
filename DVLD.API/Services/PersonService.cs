@@ -78,7 +78,7 @@ public class PersonService : IPersonService
         .SingleOrDefaultAsync(p => p.PersonID == personId);
 
         if (person == null)
-            return ServiceResult<Person>.Failure(["This person doesn't exist"], FailureType.NotFound);
+            return ServiceResult<Person>.Failure(["This person does not exist"], FailureType.NotFound);
 
         return ServiceResult<Person>.Success(person);
     }

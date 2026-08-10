@@ -26,7 +26,7 @@ public class PeopleController : ControllerBase
         return Ok(await _personService.GetAllPeopleAsync(parameters));
     }
 
-    [HttpGet("{id}", Name = "GetPersonById")]
+    [HttpGet("{personId}", Name = "GetPersonById")]
     [ProducesResponseType(typeof(PersonDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<PersonDto>> GetPersonById(int personId)
@@ -51,14 +51,11 @@ public class PeopleController : ControllerBase
         if (!result.IsSuccess)
             return this.ToActionResult(result);
 
-        return CreatedAtRoute(
-            "GetPersonById",
-            new { id = result.Data!.PersonID },
-            result.Data
+        return CreatedAtRoute("GetPersonById", new { personId = result.Data!.PersonID }, result.Data
         );
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("{personId}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -73,7 +70,7 @@ public class PeopleController : ControllerBase
         return Ok(result.Data);
     }
 
-    [HttpPost("{id}/image")]
+    [HttpPost("{personId}/image")]
     [ProducesResponseType(typeof(PersonDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -87,7 +84,7 @@ public class PeopleController : ControllerBase
         return Ok(result.Data);
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{personId}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeletePerson(int personId)

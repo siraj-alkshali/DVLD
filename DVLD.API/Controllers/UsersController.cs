@@ -26,12 +26,12 @@ public class UsersController : ControllerBase
         return Ok(await _userService.GetAllUsersAsync(parameters));
     }
 
-    [HttpGet("{id}", Name = "GetUserById")]
+    [HttpGet("{userId}", Name = "GetUserById")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserDto>> GetUserByUserId(int id)
+    public async Task<ActionResult<UserDto>> GetUserByUserId(int userId)
     {
-        UserDto? user = await _userService.GetUserDtoByIdAsync(id);
+        UserDto? user = await _userService.GetUserDtoByIdAsync(userId);
 
         if (user == null)
             return NotFound();
@@ -58,14 +58,14 @@ public class UsersController : ControllerBase
         );
     }
 
-    [HttpPatch("{id}/username")]
+    [HttpPatch("{userId}/username")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserDto>> ChangeUserName(int id, ChangeUserNameDto changeUserNameDto)
+    public async Task<ActionResult<UserDto>> ChangeUserName(int userId, ChangeUserNameDto changeUserNameDto)
     {
-        ServiceResult<UserDto> result = await _userService.ChangeUserNameAsync(id, changeUserNameDto);
+        ServiceResult<UserDto> result = await _userService.ChangeUserNameAsync(userId, changeUserNameDto);
 
         if (!result.IsSuccess)
             return this.ToActionResult(result);
@@ -74,13 +74,13 @@ public class UsersController : ControllerBase
         return Ok(result.Data);
     }
 
-    [HttpPatch("{id}/password")]
+    [HttpPatch("{userId}/password")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserDto>> ChangePassword(int id, ChangePasswordDto changePasswordDto)
+    public async Task<ActionResult<UserDto>> ChangePassword(int userId, ChangePasswordDto changePasswordDto)
     {
-        ServiceResult<UserDto> result = await _userService.ChangePasswordAsync(id, changePasswordDto);
+        ServiceResult<UserDto> result = await _userService.ChangePasswordAsync(userId, changePasswordDto);
 
         if (!result.IsSuccess)
             return this.ToActionResult(result);
@@ -88,13 +88,13 @@ public class UsersController : ControllerBase
         return Ok(result.Data);
     }
 
-    [HttpPatch("{id}/is-active")]
+    [HttpPatch("{userId}/is-active")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<UserDto>> ChangeUserStatus(int id, ChangeUserStatusDto dto)
+    public async Task<ActionResult<UserDto>> ChangeUserStatus(int userId, ChangeUserStatusDto dto)
     {
-        ServiceResult<UserDto> result = await _userService.ChangeUserStatusAsync(id, dto);
+        ServiceResult<UserDto> result = await _userService.ChangeUserStatusAsync(userId, dto);
 
         if (!result.IsSuccess)
             return this.ToActionResult(result);

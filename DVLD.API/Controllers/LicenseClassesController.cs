@@ -1,6 +1,5 @@
 using DVLD.API.DTOs.LicenseClasses;
 using DVLD.API.Services.Interfaces;
-using DVLD.DataAccess.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DVLD.API.Controllers;
@@ -9,7 +8,6 @@ namespace DVLD.API.Controllers;
 [Route("api/license-classes")]
 public class LicenseClassesController : ControllerBase
 {
-
     private readonly ILicenseClassService _licenseClassService;
 
     public LicenseClassesController(ILicenseClassService licenseClassService)
@@ -18,8 +16,8 @@ public class LicenseClassesController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<LicenseClassDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<LicenseClassDto>>> GetAllLicenseClasses()
+    [ProducesResponseType(typeof(List<LicenseClassDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<LicenseClassDto>>> GetAllLicenseClasses()
     {
         return Ok(await _licenseClassService.GetAllLicenseClassesAsync());
     }

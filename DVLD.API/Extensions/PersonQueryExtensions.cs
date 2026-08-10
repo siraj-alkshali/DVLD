@@ -25,10 +25,10 @@ public static class PersonQueryExtensions
             return query;
 
         if (parameters.GenderID.HasValue)
-            query = query.Where(p => p.GenderID == parameters.GenderID.Value);
+            query = query.Where(p => p.GenderID == parameters.GenderID);
 
         if (parameters.NationalityCountryID.HasValue)
-            query = query.Where(p => p.NationalityCountryID == parameters.NationalityCountryID.Value);
+            query = query.Where(p => p.NationalityCountryID == parameters.NationalityCountryID);
 
         return query;
     }
@@ -42,13 +42,19 @@ public static class PersonQueryExtensions
             "firstname" =>
                 descending
                     ? query.OrderByDescending(p => p.FirstName)
-                    : query.OrderBy(p => p.FirstName),
+                        .ThenByDescending(p => p.PersonID)
+
+                    : query.OrderBy(p => p.FirstName)
+                        .ThenBy(p => p.PersonID),
 
 
             "lastname" =>
                 descending
                     ? query.OrderByDescending(p => p.LastName)
-                    : query.OrderBy(p => p.LastName),
+                        .ThenByDescending(p => p.PersonID)
+
+                    : query.OrderBy(p => p.LastName)
+                        .ThenBy(p => p.PersonID),
 
             _ =>
                 query.OrderBy(p => p.PersonID)

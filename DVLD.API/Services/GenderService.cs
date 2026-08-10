@@ -16,10 +16,11 @@ public class GenderService : IGenderService
         _context = context;
     }
 
-    public async Task<IEnumerable<GenderDto>> GetAllGendersAsync()
+    public async Task<List<GenderDto>> GetAllGendersAsync()
     {
-        return await _context.Genders.Select(g => new GenderDto(g.GenderID, g.GenderName))
+        return await _context.Genders
         .AsNoTracking()
+        .Select(g => new GenderDto(g.GenderID, g.GenderName))
         .ToListAsync();
     }
 
@@ -30,7 +31,8 @@ public class GenderService : IGenderService
 
     public async Task<GenderDto?> GetGenderDtoByIdAsync(int genderId)
     {
-        return await _context.Genders.AsNoTracking()
+        return await _context.Genders
+        .AsNoTracking()
         .Where(g => g.GenderID == genderId)
         .Select(g => new GenderDto(g.GenderID, g.GenderName)).SingleOrDefaultAsync();
     }

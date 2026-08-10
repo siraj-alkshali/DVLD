@@ -5,7 +5,7 @@ namespace DVLD.API.Services.Interfaces;
 
 public interface ICountryService
 {
-    Task<IEnumerable<CountryDto>> GetAllCountriesAsync();
+    Task<List<CountryDto>> GetAllCountriesAsync();
     Task<Country?> GetCountryByIdAsync(int countryId);
     Task<CountryDto?> GetCountryDtoByIdAsync(int countryId);
 }
