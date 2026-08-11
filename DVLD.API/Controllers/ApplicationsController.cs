@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using DVLD.API.DTOs.Licenses;
 using DVLD.API.DTOs;
 using DVLD.API.DTOs.DetainedLicenses;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DVLD.API.Controllers;
 
@@ -125,5 +126,4 @@ public class ApplicationsController : ControllerBase
 
         return Ok(result.Data);
     }
-
 }

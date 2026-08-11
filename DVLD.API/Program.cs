@@ -40,12 +40,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddCorsPolicy(builder.Configuration);
+
 builder.Services.AddReferenceDataServices()
                 .AddAuthenticationServices()
                 .AddApplicationServices()
                 .AddLicenseServices();
 
 builder.Services.AddRateLimitationPolicies();
+
+builder.Services.AddHealthChecksConfiguration();
 
 builder.Services.AddControllers();
 
@@ -96,6 +100,8 @@ var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
+app.UseMiddleware<RequestLoggingMiddleware>();
+
 app.UseStaticFiles();
 
 if (app.Environment.IsDevelopment())
@@ -106,6 +112,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors("Frontend");
+
 app.UseRateLimiter();
 
 app.UseAuthentication();
@@ -113,5 +121,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health").AllowAnonymous();
 
 app.Run();
