@@ -27,10 +27,6 @@ public class DetainedLicenseService : IDetainedLicenseService
     {
         IQueryable<DetainedLicense> query = _context.DetainedLicenses
         .AsNoTracking()
-        .Include(dl => dl.License)
-        .ThenInclude(l => l.Driver)
-        .ThenInclude(d => d.Person)
-        .Include(dl => dl.CreatedByUser)
         .ApplySearch(parameters.SearchTerm)
         .ApplyFilter(parameters)
         .ApplySort(parameters);

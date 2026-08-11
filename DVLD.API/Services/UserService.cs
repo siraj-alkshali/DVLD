@@ -162,8 +162,6 @@ public class UserService : IUserService
     public async Task<PagedResultDto<UserDto>> GetAllUsersAsync(UsersQueryParameters parameters)
     {
         IQueryable<User> query = _context.Users.AsNoTracking()
-        .Include(u => u.Person)
-        .Include(u => u.Role)
         .ApplySearch(parameters.SearchTerm)
         .ApplyFilter(parameters)
         .ApplySort(parameters);

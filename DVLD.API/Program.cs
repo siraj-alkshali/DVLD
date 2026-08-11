@@ -1,14 +1,13 @@
 using DVLD.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
-using DVLD.API.Services;
-using DVLD.API.Services.Interfaces;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
-
+using DVLD.API.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,13 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<DVLDContext>(options =>
 {
-    var connectionString = builder.Configuration
-        .GetConnectionString("DVLDConnection");
-
-    options.UseMySql(
-        connectionString,
-        ServerVersion.AutoDetect(connectionString)
-    );
+    string? connectionString = builder.Configuration.GetConnectionString("DVLDConnection");
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 });
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -45,35 +39,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddScoped<IPersonService, PersonService>();
-builder.Services.AddScoped<IImageService, ImageService>();
-builder.Services.AddScoped<ICountryService, CountryService>();
-builder.Services.AddScoped<IGenderService, GenderService>();
-builder.Services.AddScoped<ILicenseClassService, LicenseClassService>();
-builder.Services.AddScoped<ITestTypeService, TestTypeService>();
-builder.Services.AddScoped<IApplicationTypeService, ApplicationTypeService>();
-builder.Services.AddScoped<IApplicationStatusService, ApplicationStatusService>();
-builder.Services.AddScoped<ILicenseIssueReasonService, LicenseIssueReasonService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IRefreshTokenService, RefreshTokenService>();
-builder.Services.AddScoped<IApplicationService, ApplicationService>();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddScoped<ILocalDrivingLicenseApplicationService, LocalDrivingLicenseApplicationService>();
-builder.Services.AddScoped<ITestAppointmentService, TestAppointmentService>();
-builder.Services.AddScoped<ITestService, TestService>();
-builder.Services.AddScoped<IDriverService, DriverService>();
-builder.Services.AddScoped<ILicenseService, LicenseService>();
-builder.Services.AddScoped<IDetainedLicenseService, DetainedLicenseService>();
-builder.Services.AddScoped<IInternationalLicenseService, InternationalLicenseService>();
+builder.Services.AddReferenceDataServices()
+                .AddAuthenticationServices()
+                .AddApplicationServices()
+                .AddLicenseServices();
+
+builder.Services.AddRateLimitationPolicies();
 
 builder.Services.AddControllers();
 
-builder.Services.AddAuthentication();
-
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 builder.Services.AddHttpContextAccessor();
 
@@ -115,7 +95,6 @@ var app = builder.Build();
 
 app.UseStaticFiles();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -123,6 +102,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 

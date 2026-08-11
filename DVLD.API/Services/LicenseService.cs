@@ -30,10 +30,6 @@ public class LicenseService : ILicenseService
     {
         IQueryable<License> query = _context.Licenses
         .AsNoTracking()
-        .Include(l => l.Application)
-        .ThenInclude(app => app.ApplicantPerson)
-        .Include(l => l.LicenseClass)
-        .Include(l => l.LicenseIssueReason)
         .ApplySearch(parameters.SearchTerm)
         .ApplyFilter(parameters)
         .ApplySort(parameters);

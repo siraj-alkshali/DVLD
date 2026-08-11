@@ -47,10 +47,6 @@ public class ApplicationService : IApplicationService
     {
         IQueryable<Application> query = _context.Applications
         .AsNoTracking()
-        .Include(app => app.ApplicantPerson)
-        .Include(app => app.CreatedByUser)
-        .Include(app => app.ApplicationType)
-        .Include(app => app.ApplicationStatus)
         .ApplySearch(parameters.SearchTerm)
         .ApplyFilters(parameters)
         .ApplySort(parameters);

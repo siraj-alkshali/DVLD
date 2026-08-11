@@ -22,10 +22,6 @@ public class InternationalLicenseService : IInternationalLicenseService
     {
         IQueryable<InternationalLicense> query = _context.InternationalLicenses
         .AsNoTracking()
-        .Include(intlLicense => intlLicense.Driver)
-        .ThenInclude(intlLicense => intlLicense.Person)
-        .Include(intlLicense => intlLicense.IssuedUsingLocalLicense)
-        .ThenInclude(intlLicense => intlLicense.LicenseClass)
         .ApplySearch(parameters.SearchTerm)
         .ApplyFilter(parameters)
         .ApplySort(parameters);

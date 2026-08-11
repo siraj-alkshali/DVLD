@@ -29,8 +29,6 @@ public class DriverService : IDriverService
     {
         IQueryable<Driver> query = _context.Drivers
         .AsNoTracking()
-        .Include(d => d.Person)
-        .Include(d => d.CreatedByUser)
         .ApplySearch(parameters.SearchTerm)
         .ApplySort(parameters);
 

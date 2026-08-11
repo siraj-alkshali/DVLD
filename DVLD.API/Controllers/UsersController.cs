@@ -5,6 +5,7 @@ using DVLD.API.Common.Results;
 using DVLD.API.DTOs.Common;
 using DVLD.API.Common.QueryParameters;
 using DVLD.API.Extensions;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DVLD.API.Controllers;
 
@@ -58,11 +59,13 @@ public class UsersController : ControllerBase
         );
     }
 
+    [EnableRateLimiting("UsernameLimiter")]
     [HttpPatch("{userId}/username")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<UserDto>> ChangeUserName(int userId, ChangeUserNameDto changeUserNameDto)
     {
         ServiceResult<UserDto> result = await _userService.ChangeUserNameAsync(userId, changeUserNameDto);
@@ -74,10 +77,12 @@ public class UsersController : ControllerBase
         return Ok(result.Data);
     }
 
+    [EnableRateLimiting("PasswordLimiter")]
     [HttpPatch("{userId}/password")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<UserDto>> ChangePassword(int userId, ChangePasswordDto changePasswordDto)
     {
         ServiceResult<UserDto> result = await _userService.ChangePasswordAsync(userId, changePasswordDto);
